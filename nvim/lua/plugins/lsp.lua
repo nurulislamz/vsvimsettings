@@ -1,39 +1,5 @@
 return {
-    -- 1. THE ROSLYN LSP (For C#)
-    {
-        "seblj/roslyn.nvim",
-        ft = "cs",
-        dependencies = { "hrsh7th/cmp-nvim-lsp" },
-        config = function()
-            local roslyn_dll = "/home/nurul/.dotnet/tools/.store/easydotnet/3.0.19/easydotnet/3.0.19/tools/Roslyn/LanguageServer/Microsoft.CodeAnalysis.LanguageServer.dll"
-            require("roslyn").setup({
-                exe = "dotnet",
-                args = {
-                    roslyn_dll,
-                    "--logLevel=Information",
-                    "--extensionLogDirectory=" .. vim.fs.dirname(vim.lsp.get_log_path()),
-                    "--perProjectInitialization",
-                },
-                config = {
-                    capabilities = require("cmp_nvim_lsp").default_capabilities(),
-                    on_attach = function(client, bufnr)
-                        local map = function(keys, func, desc)
-                            vim.keymap.set("n", keys, func, { buffer = bufnr, desc = "LSP: " .. desc })
-                        end
-                        -- Force "gd" and "gr" to use Telescope properly
-                        map("gd", vim.lsp.buf.definition, "Go to Definition")
-                        map("gr", function() require("telescope.builtin").lsp_references() end, "Go to References (Telescope)")
-                        map("gi", vim.lsp.buf.implementation, "Go to Implementation")
-                        map("K", vim.lsp.buf.hover, "Hover Doc")
-                        map("<leader>ca", vim.lsp.buf.code_action, "Code Action")
-                        map("<leader>rn", vim.lsp.buf.rename, "Rename Symbol")
-                    end,
-                },
-            })
-        end,
-    },
-
-    -- 2. LSPCONFIG & AUTOCOMPLETE (For Lua and General Config)
+    -- 1. LSPCONFIG & AUTOCOMPLETE
     {
         "neovim/nvim-lspconfig",
         dependencies = {
@@ -49,15 +15,22 @@ return {
         },
         config = function()
             require("mason").setup()
-            require("mason-lspconfig").setup({ 
-                ensure_installed = { "lua_ls" }
-            })
+            require("mason-lspconfig").setup({ ensure_installed = { "lua_ls" } })
 
             local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-            -- Native Neovim 0.11 API for Lua support
-            vim.lsp.config("lua_ls", { capabilities = capabilities })
-            vim.lsp.enable("lua_ls")
+            -- Use native nvim 0.11 API for lua_ls
+            if vim.lsp.config then
+                vim.lsp.config("lua_ls", { capabilities = capabilities })
+                vim.lsp.enable("lua_ls")
+                -- Explicitly disable omnisharp to avoid interference with easy-dotnet
+                vim.lsp.config("omnisharp", { autostart = false })
+            else
+                local lspconfig = require("lspconfig")
+                lspconfig.lua_ls.setup({ capabilities = capabilities })
+                -- Explicitly disable omnisharp to avoid interference with easy-dotnet
+                lspconfig.omnisharp.setup({ autostart = false })
+            end
 
             -- Autocompletion Setup
             local cmp = require("cmp")
