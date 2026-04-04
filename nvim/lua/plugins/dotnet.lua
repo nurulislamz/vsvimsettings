@@ -1,6 +1,7 @@
 return {
   {
     "GustavEikaas/easy-dotnet.nvim",
+    cond = not vim.g.vscode,
     lazy = false,
     dependencies = { "nvim-lua/plenary.nvim", "mfussenegger/nvim-dap", "nvim-telescope/telescope.nvim" },
     config = function()

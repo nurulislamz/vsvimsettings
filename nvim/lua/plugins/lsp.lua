@@ -2,6 +2,7 @@ return {
     -- 1. LSPCONFIG & AUTOCOMPLETE
     {
         "neovim/nvim-lspconfig",
+        cond = not vim.g.vscode,
         dependencies = {
             "williamboman/mason.nvim",
             "williamboman/mason-lspconfig.nvim",
@@ -15,22 +16,15 @@ return {
         },
         config = function()
             require("mason").setup()
-            require("mason-lspconfig").setup({ ensure_installed = { "lua_ls" } })
+            require("mason-lspconfig").setup({ ensure_installed = { "lua_ls", "gopls" } })
 
+            local lspconfig = require("lspconfig")
             local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-            -- Use native nvim 0.11 API for lua_ls
-            if vim.lsp.config then
-                vim.lsp.config("lua_ls", { capabilities = capabilities })
-                vim.lsp.enable("lua_ls")
-                -- Explicitly disable omnisharp to avoid interference with easy-dotnet
-                vim.lsp.config("omnisharp", { autostart = false })
-            else
-                local lspconfig = require("lspconfig")
-                lspconfig.lua_ls.setup({ capabilities = capabilities })
-                -- Explicitly disable omnisharp to avoid interference with easy-dotnet
-                lspconfig.omnisharp.setup({ autostart = false })
-            end
+            lspconfig.lua_ls.setup({ capabilities = capabilities })
+            lspconfig.gopls.setup({ capabilities = capabilities })
+            -- Explicitly disable omnisharp to avoid interference with easy-dotnet
+            lspconfig.omnisharp.setup({ autostart = false })
 
             -- Autocompletion Setup
             local cmp = require("cmp")
