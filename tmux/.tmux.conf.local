@@ -388,7 +388,7 @@ tmux_conf_urlscan_options="--compact --dedupe"
 #set -g history-limit 10000
 
 # start with mouse mode enabled
-#set -g mouse on
+set -g mouse on
 
 # force Vi mode
 #   really you should export VISUAL or EDITOR environment variable, see manual
@@ -416,11 +416,17 @@ set -as terminal-features ',xterm*:extkeys,tmux*:extkeys,screen*:extkeys,alacrit
 bind -n S-Enter send-keys S-Enter #!important
 %endif
 
+# restore stock n/p window navigation (oh-my-tmux unbinds these)
+bind -r n next-window      #!important
+bind -r p previous-window  #!important
+
 # display a message after toggling mouse support
 bind m run "cut -c3- '#{TMUX_CONF}' | sh -s _toggle_mouse" \; display 'mouse #{?#{mouse},on,off}'
 
+set -g alternate-screen on
+
 # move status line to top
-#set -g status-position top
+set -g status-position top
 
 
 # -- tpm -----------------------------------------------------------------------
@@ -467,6 +473,13 @@ tmux_conf_uninstall_plugins_on_reload=true
 
 # re-added from previous config (which-key only; catppuccin dropped — conflicts with oh-my-tmux theme)
 set -g @plugin 'alexwforsythe/tmux-which-key'   # prefix + Space -> popup menu
+
+# kill pane with no confirmation prompt
+bind x kill-pane
+
+# join-pane: pull a pane FROM another window / send current pane TO another window
+bind < command-prompt -p "join pane from:" "join-pane -h -s '%%'"
+bind > command-prompt -p "send pane to:" "join-pane -h -t '%%'"
 
 
 # -- custom variables ----------------------------------------------------------
@@ -519,6 +532,12 @@ set -g @plugin 'alexwforsythe/tmux-which-key'   # prefix + Space -> popup menu
 #   sleep 300                                         # sleep for 5 minutes, throttle network requests whatever the value of status-interval
 # }
 #
+# Disable alternate screen so scrollback works in copy mode (for Copilot CLI etc.)
+
+# Smart automatic window naming (directory | command)
+set -g automatic-rename on
+set -g automatic-rename-format '#{b:pane_current_path} | #{pane_current_command}'
+
 # "$@"
 # # /!\ do not remove the previous line
 # #     do not write below this line
