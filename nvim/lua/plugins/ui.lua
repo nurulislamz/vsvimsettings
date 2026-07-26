@@ -3,11 +3,11 @@ return {
     "christoomey/vim-tmux-navigator",
     lazy = false, 
     keys = {
-      { "<c-h>", "<cmd><C-U>TmuxNavigateLeft<cr>" },
-      { "<c-j>", "<cmd><C-U>TmuxNavigateDown<cr>" },
-      { "<c-k>", "<cmd><C-U>TmuxNavigateUp<cr>" },
-      { "<c-l>", "<cmd><C-U>TmuxNavigateRight<cr>" },
-      { "<c-\\>", "<cmd><C-U>TmuxNavigatePrevious<cr>" },
+      { "<c-h>", "<cmd><C-U>TmuxNavigateLeft<cr>", mode = { "n", "t" } },
+      { "<c-j>", "<cmd><C-U>TmuxNavigateDown<cr>", mode = { "n", "t" } },
+      { "<c-k>", "<cmd><C-U>TmuxNavigateUp<cr>", mode = { "n", "t" } },
+      { "<c-l>", "<cmd><C-U>TmuxNavigateRight<cr>", mode = { "n", "t" } },
+      { "<c-\\>", "<cmd><C-U>TmuxNavigatePrevious<cr>", mode = { "n", "t" } },
     },
   },
   { "nvim-lualine/lualine.nvim", cond = not vim.g.vscode, dependencies = { "nvim-tree/nvim-web-devicons" }, config = true },
@@ -54,6 +54,9 @@ return {
           },
         },
         presets = { bottom_search = true, command_palette = true, long_message_to_split = true },
+        views = {
+          notify = { timeout = 1000 },
+        },
       })
     end
   }

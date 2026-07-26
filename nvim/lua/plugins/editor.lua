@@ -17,7 +17,21 @@ return {
     branch = "master",
     config = function() 
       require("nvim-treesitter.configs").setup({ 
-        ensure_installed = { "c_sharp", "lua", "vim", "vimdoc", "go", "gomod" }, 
+        ensure_installed = {
+          "c",
+          "cpp",
+          "c_sharp",
+          "go",
+          "gomod",
+          "gosum",
+          "gowork",
+          "java",
+          "lua",
+          "python",
+          "rust",
+          "vim",
+          "vimdoc",
+        },
         highlight = { enable = true } 
       }) 
     end 
@@ -31,6 +45,21 @@ return {
     end
   },
   { "mbbill/undotree", lazy = false, cond = not vim.g.vscode, keys = { { "<leader>u", vim.cmd.UndotreeToggle, desc = "Toggle Undotree" } } },
+  {
+    "okuuva/auto-save.nvim",
+    cond = not vim.g.vscode,
+    event = { "InsertLeave", "TextChanged" },
+    opts = {
+      debounce_delay = 1000,
+      condition = function(buf)
+        local fn = vim.fn
+        local exclude_ft = { "gitcommit", "gitrebase" }
+        if vim.tbl_contains(exclude_ft, vim.bo[buf].filetype) then return false end
+        if fn.getbufvar(buf, "&modifiable") ~= 1 then return false end
+        return true
+      end,
+    },
+  },
   { "windwp/nvim-autopairs", lazy = false, event = "InsertEnter", config = true },
   { "numToStr/Comment.nvim", opts = {}, lazy = false },
   { 

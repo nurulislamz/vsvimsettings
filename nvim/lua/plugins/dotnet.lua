@@ -1,5 +1,18 @@
 return {
   {
+    "seblyng/roslyn.nvim",
+    ft = { "cs", "razor", "cshtml" },
+    init = function()
+      vim.filetype.add({
+        extension = {
+          razor = "razor",
+          cshtml = "razor",
+        },
+      })
+    end,
+    opts = {},
+  },
+  {
     "GustavEikaas/easy-dotnet.nvim",
     cond = not vim.g.vscode,
     lazy = false,
@@ -14,7 +27,7 @@ return {
         },
         external_terminal = nil,
         lsp = {
-          enabled = true,
+          enabled = false,
           preload_roslyn = true,
           roslynator_enabled = true,
           easy_dotnet_analyzer_enabled = true,

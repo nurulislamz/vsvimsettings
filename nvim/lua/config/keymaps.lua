@@ -38,6 +38,8 @@ else
 
     map({ "i", "x", "n", "s" }, "<C-s>", "<cmd>w<cr><esc>", { desc = "Save file" })
 
+    map("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
+
     -- ==========================================
     -- LSP Navigation (Definitions, References, etc.)
     -- ==========================================
@@ -49,4 +51,5 @@ else
     map("n", "K", lsp.hover, { desc = "Hover Documentation" })
     map("n", "<leader>rn", lsp.rename, { desc = "Rename Symbol" })
     map("n", "<leader>ca", lsp.code_action, { desc = "Code Action" })
+    map("n", "gl", vim.diagnostic.open_float, { desc = "Show Line Diagnostics" })
 end
