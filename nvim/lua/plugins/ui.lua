@@ -11,7 +11,37 @@ return {
     },
   },
   { "nvim-lualine/lualine.nvim", cond = not vim.g.vscode, dependencies = { "nvim-tree/nvim-web-devicons" }, config = true },
-  { "nvim-tree/nvim-tree.lua", cond = not vim.g.vscode, dependencies = { "nvim-tree/nvim-web-devicons" }, config = true },
+  { 
+    "nvim-tree/nvim-tree.lua", 
+    cond = not vim.g.vscode, 
+    dependencies = { "nvim-tree/nvim-web-devicons" }, 
+    config = function()
+      require("nvim-tree").setup({
+        actions = {
+          open_file = {
+            quit_on_open = false,
+            window_picker = { enable = false },
+            eject = false,
+          }
+        },
+        on_attach = function(bufnr)
+          local api = require("nvim-tree.api")
+          local function opts(desc)
+            return { desc = "nvim-tree: " .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
+          end
+          -- Open file in new tab with Enter
+          vim.keymap.set('n', '<CR>', function()
+            local node = api.tree.get_node_under_cursor()
+            if node.type == "file" then
+              api.node.open.tab()
+            else
+              api.node.open.edit()
+            end
+          end, opts("Open in tab"))
+        end
+      })
+    end 
+  },
   { "folke/tokyonight.nvim", cond = not vim.g.vscode, lazy = false, priority = 1000, config = function() vim.cmd([[colorscheme tokyonight]]) end },
   { 
     "folke/which-key.nvim", 

@@ -3,7 +3,14 @@ return {
   dependencies = { "nvim-telescope/telescope.nvim" },
   event = "VeryLazy",
   config = function()
-    require("neoclip").setup()
+    require("neoclip").setup({
+      keys = {
+        telescope = {
+          i = { paste = "<cr>", select = "<c-y>" },
+          n = { paste = "<cr>", select = "<c-y>" },
+        },
+      },
+    })
     require("telescope").load_extension("neoclip")
   end,
   keys = {

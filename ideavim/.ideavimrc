@@ -16,7 +16,7 @@ set incsearch
 map Q gq
 
 " --- Enable IdeaVim plugins https://jb.gg/ideavim-plugins
-
+ 
 " Highlight copied text
 Plug 'machakann/vim-highlightedyank'
 " Commentary plugin
@@ -32,14 +32,14 @@ Plug 'tpope/vim-commentary'
 
 "" Map \b to toggle the breakpoint on the current line
 "map \b <Action>(ToggleLineBreakpoint)
-
+ 
  " Use case insensitive search, except when using capital letters
  set ignorecase
  set smartcase
-
+ 
  " Clipboard settings
  set clipboard=unnamed
-
+ 
  "Navigate in insert mode
  inoremap <C-h> <Left>
  inoremap <C-j> <Down>
@@ -49,7 +49,7 @@ Plug 'tpope/vim-commentary'
  cnoremap <C-j> <Down>
  cnoremap <C-k> <Up>
  cnoremap <C-l> <Right>
-
+ 
  " Allow backspacing over autoindent, line breaks and start of insert action
  set backspace=indent,eol,start
 

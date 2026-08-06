@@ -8,7 +8,25 @@ return {
     keys = { 
       { "<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Find Files" }, 
       { "<leader>fs", "<cmd>Telescope live_grep<cr>", desc = "Find String" } 
-    } 
+    },
+    config = function()
+      local telescope = require("telescope")
+      local actions = require("telescope.actions")
+      telescope.setup({
+        pickers = {
+          find_files = {
+            mappings = {
+              i = { ["<CR>"] = actions.file_tab }
+            }
+          },
+          live_grep = {
+            mappings = {
+              i = { ["<CR>"] = actions.file_tab }
+            }
+          }
+        }
+      })
+    end
   },
   { 
     "nvim-treesitter/nvim-treesitter", 

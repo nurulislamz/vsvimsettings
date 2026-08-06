@@ -33,8 +33,15 @@ else
     map("n", "<leader>-", "<C-w>s", { desc = "Split window horizontally" })
     map("n", "<leader>c", ":enew<CR>", { desc = "Create new buffer" })
     map("n", "<leader>q", ":bd<CR>", { desc = "Close current buffer" })
-    map("n", "<leader>n", ":bnext<CR>", { desc = "Next buffer" })
-    map("n", "<leader>p", ":bprev<CR>", { desc = "Previous buffer" })
+    map("n", "<leader>bn", ":bnext<CR>", { desc = "Next buffer" })
+    map("n", "<leader>bp", ":bprev<CR>", { desc = "Previous buffer" })
+
+    -- Tab Management
+    map("n", "<leader>tt", ":tabnew<CR>", { desc = "New tab" })
+    map("n", "<leader>tc", ":tabclose<CR>", { desc = "Close current tab" })
+    map("n", "<leader>to", ":tabonly<CR>", { desc = "Close all other tabs" })
+    map("n", "<leader>tn", ":tabnext<CR>", { desc = "Next tab" })
+    map("n", "<leader>tp", ":tabprevious<CR>", { desc = "Previous tab" })
 
     map({ "i", "x", "n", "s" }, "<C-s>", "<cmd>w<cr><esc>", { desc = "Save file" })
 

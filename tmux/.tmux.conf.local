@@ -6,6 +6,8 @@
 #         without any warranty.
 #         Copyright 2012— Gregory Pakosz (@gpakosz).
 
+# make the stuff scrollable via mouse
+set -g mouse on
 
 # -- bindings ------------------------------------------------------------------
 
