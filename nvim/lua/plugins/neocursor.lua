@@ -7,8 +7,7 @@ return {
     event = "InsertEnter",
     build = 'uv run --with "httpx[http2]" python -c "import httpx"',
     opts = {
-      -- Keep map_tab false when cmp (and optionally copilot-cmp) owns <Tab>.
-      -- lsp.lua calls neocursor.accept() first so ghost text still accepts on Tab/CR.
+      -- cmp still owns <Tab>/<CR>; lsp.lua calls neocursor.accept() first when this is on.
       map_tab = false,
     },
     config = function(_, opts)
