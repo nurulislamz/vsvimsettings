@@ -13,18 +13,21 @@ return {
       local telescope = require("telescope")
       local actions = require("telescope.actions")
       telescope.setup({
-        pickers = {
-          find_files = {
-            mappings = {
-              i = { ["<CR>"] = actions.file_tab }
-            }
+        defaults = {
+          mappings = {
+            -- Enter = current window; Ctrl-t / Shift-Enter = new tab
+            i = {
+              ["<CR>"] = actions.select_default,
+              ["<C-t>"] = actions.select_tab,
+              ["<S-CR>"] = actions.select_tab,
+            },
+            n = {
+              ["<CR>"] = actions.select_default,
+              ["<C-t>"] = actions.select_tab,
+              ["<S-CR>"] = actions.select_tab,
+            },
           },
-          live_grep = {
-            mappings = {
-              i = { ["<CR>"] = actions.file_tab }
-            }
-          }
-        }
+        },
       })
     end
   },
@@ -45,6 +48,10 @@ return {
           "gowork",
           "java",
           "lua",
+          -- LSP hover/signature floats are markdown; without these parsers
+          -- nvim 0.12's open_floating_preview errors and docs look broken.
+          "markdown",
+          "markdown_inline",
           "python",
           "rust",
           "vim",

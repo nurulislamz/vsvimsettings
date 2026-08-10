@@ -1,0 +1,22 @@
+# Readline vi mode (pairs with `set -o vi` in .bashrc)
+set editing-mode vi
+set show-mode-in-prompt on
+
+# Tab completion behavior
+set show-all-if-ambiguous on
+set show-all-if-unmodified on
+set completion-ignore-case on
+set colored-stats on
+set mark-symlinked-directories on
+
+# History search while typing (works in both insert and command mode)
+"\C-p": history-search-backward
+"\C-n": history-search-forward
+
+# Word ops on Ctrl/Alt (needs tmux `setw -g xterm-keys on` for arrows inside tmux)
+"\C-h": backward-kill-word
+"\e\C-h": backward-kill-word
+"\e\d": backward-kill-word
+"\e[3;5~": kill-word
+"\e[1;5C": forward-word
+"\e[1;5D": backward-word

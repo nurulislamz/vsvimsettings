@@ -45,6 +45,10 @@ else
 
     map({ "i", "x", "n", "s" }, "<C-s>", "<cmd>w<cr><esc>", { desc = "Save file" })
 
+    -- Ctrl+Backspace often arrives as <C-h> in tmux/terminals
+    map("i", "<C-h>", "<C-w>", { desc = "Delete previous word" })
+    map("i", "<C-BS>", "<C-w>", { desc = "Delete previous word" })
+
     map("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
 
     -- ==========================================

@@ -21,24 +21,29 @@ return {
           open_file = {
             quit_on_open = false,
             window_picker = { enable = false },
-            eject = false,
-          }
+          },
         },
         on_attach = function(bufnr)
           local api = require("nvim-tree.api")
           local function opts(desc)
             return { desc = "nvim-tree: " .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
           end
-          -- Open file in new tab with Enter
-          vim.keymap.set('n', '<CR>', function()
+
+          -- Enter = current window; Ctrl-t / Shift-Enter = new tab
+          api.config.mappings.default_on_attach(bufnr)
+
+          local function open_in_new_tab()
             local node = api.tree.get_node_under_cursor()
-            if node.type == "file" then
-              api.node.open.tab()
-            else
+            if not node or node.name == ".." or node.nodes ~= nil then
               api.node.open.edit()
+              return
             end
-          end, opts("Open in tab"))
-        end
+            local path = node.link_to or node.absolute_path
+            vim.cmd("tab drop " .. vim.fn.fnameescape(path))
+          end
+
+          vim.keymap.set("n", "<S-CR>", open_in_new_tab, opts("Open in new tab"))
+        end,
       })
     end 
   },

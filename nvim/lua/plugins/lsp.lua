@@ -13,7 +13,6 @@ return {
             "hrsh7th/cmp-cmdline",
             "L3MON4D3/LuaSnip",
             "saadparwaiz1/cmp_luasnip",
-            "zbirenbaum/copilot-cmp"
         },
         config = function()
             local dotnet_tools = vim.fn.expand("~/.dotnet/tools")
@@ -102,14 +101,28 @@ return {
 
             -- Autocompletion Setup
             local cmp = require("cmp")
+
+            local function accept_completion(fallback)
+                -- neocursor first, then confirm cmp selection, else fallback
+                local ok, neocursor = pcall(require, "neocursor")
+                if ok and neocursor.accept and neocursor.accept() then
+                    return
+                end
+                if cmp.visible() then
+                    cmp.confirm({ select = true })
+                else
+                    fallback()
+                end
+            end
+
             cmp.setup({
                 snippet = { expand = function(args) require("luasnip").lsp_expand(args.body) end },
                 mapping = cmp.mapping.preset.insert({
                     ["<C-Space>"] = cmp.mapping.complete(),
-                    ["<Tab>"] = cmp.mapping.confirm({ select = true }),
+                    ["<Tab>"] = cmp.mapping(accept_completion, { "i", "s" }),
+                    ["<CR>"] = cmp.mapping(accept_completion, { "i", "s" }),
                 }),
                 sources = cmp.config.sources({
-                    { name = "copilot" },
                     { name = "nvim_lsp" },
                     { name = "luasnip" },
                     { name = "buffer" },

@@ -23,9 +23,11 @@ return {
       dashboard.section.buttons.val = {
         dashboard.button("f", "  Find file", ":Telescope find_files <CR>"),
         dashboard.button("p", "  Projects", ":Telescope projects <CR>"), -- Integrated with project.nvim
+        dashboard.button("s", "󰁯  Restore session", [[:lua require("persistence").load() <CR>]]),
+        dashboard.button("l", "󰦛  Restore last session", [[:lua require("persistence").load({ last = true }) <CR>]]),
         dashboard.button("n", "  New file", ":ene <BAR> startinsert <CR>"),
         dashboard.button("g", "  Find text", ":Telescope live_grep <CR>"),
-        dashboard.button("l", "󰒲  Lazy", ":Lazy<CR>"),
+        dashboard.button("L", "󰒲  Lazy", ":Lazy<CR>"),
         dashboard.button("q", "  Quit", ":qa<CR>"),
       }
 
