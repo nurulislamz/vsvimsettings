@@ -13,7 +13,6 @@ return {
             "hrsh7th/cmp-cmdline",
             "L3MON4D3/LuaSnip",
             "saadparwaiz1/cmp_luasnip",
-            "zbirenbaum/copilot-cmp"
         },
         config = function()
             local dotnet_tools = vim.fn.expand("~/.dotnet/tools")
@@ -102,18 +101,41 @@ return {
 
             -- Autocompletion Setup
             local cmp = require("cmp")
+
+            -- AI (neocursor OR copilot) uses inline ghost text + Tab/CR accept.
+            -- nvim-cmp stays for LSP/snippets/buffer/path only.
+            local function accept_ai_or_cmp(fallback)
+                if vim.g.ai_neocursor then
+                    local ok, neocursor = pcall(require, "neocursor")
+                    if ok and neocursor.accept and neocursor.accept() then
+                        return
+                    end
+                elseif vim.g.ai_copilot then
+                    local ok, suggestion = pcall(require, "copilot.suggestion")
+                    if ok and suggestion.is_visible() then
+                        suggestion.accept()
+                        return
+                    end
+                end
+                if cmp.visible() then
+                    cmp.confirm({ select = true })
+                else
+                    fallback()
+                end
+            end
+
             cmp.setup({
                 snippet = { expand = function(args) require("luasnip").lsp_expand(args.body) end },
                 mapping = cmp.mapping.preset.insert({
                     ["<C-Space>"] = cmp.mapping.complete(),
-                    ["<Tab>"] = cmp.mapping.confirm({ select = true }),
+                    ["<Tab>"] = cmp.mapping(accept_ai_or_cmp, { "i", "s" }),
+                    ["<CR>"] = cmp.mapping(accept_ai_or_cmp, { "i", "s" }),
                 }),
                 sources = cmp.config.sources({
-                    { name = "copilot" },
                     { name = "nvim_lsp" },
                     { name = "luasnip" },
                     { name = "buffer" },
-                    { name = "path" }
+                    { name = "path" },
                 }),
             })
 

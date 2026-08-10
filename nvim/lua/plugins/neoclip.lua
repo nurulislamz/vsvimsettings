@@ -6,8 +6,15 @@ return {
     require("neoclip").setup({
       keys = {
         telescope = {
-          i = { paste = "<cr>", select = "<c-y>" },
-          n = { paste = "<cr>", select = "<c-y>" },
+          i = {
+            -- Enter/Tab paste (like cmp confirm); Ctrl-y only sets the register
+            paste = { "<cr>", "<tab>" },
+            select = "<c-y>",
+          },
+          n = {
+            paste = { "<cr>", "<tab>" },
+            select = "<c-y>",
+          },
         },
       },
     })

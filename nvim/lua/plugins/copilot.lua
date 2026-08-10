@@ -1,24 +1,36 @@
 return {
   {
     "zbirenbaum/copilot.lua",
+    cond = function()
+      return vim.g.ai_copilot
+    end,
     cmd = "Copilot",
     event = "InsertEnter",
     config = function()
       require("copilot").setup({
-        suggestion = { enabled = false },
+        -- Same UX as neocursor: inline ghost text, Tab accepts (see lsp.lua).
+        suggestion = {
+          enabled = true,
+          auto_trigger = true,
+          debounce = 75,
+          keymap = {
+            accept = false, -- owned by shared Tab/CR handler in lsp.lua
+            accept_word = false,
+            accept_line = false,
+            next = "<M-]>",
+            prev = "<M-[>",
+            dismiss = "<C-]>",
+          },
+        },
         panel = { enabled = false },
       })
     end,
   },
   {
-    "zbirenbaum/copilot-cmp",
-    dependencies = { "zbirenbaum/copilot.lua" },
-    config = function()
-      require("copilot_cmp").setup()
-    end,
-  },
-  {
     "CopilotC-Nvim/CopilotChat.nvim",
+    cond = function()
+      return vim.g.ai_copilot
+    end,
     branch = "canary",
     dependencies = {
       { "zbirenbaum/copilot.lua" },

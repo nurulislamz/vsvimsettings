@@ -394,8 +394,14 @@ set -g mouse on
 
 # force Vi mode
 #   really you should export VISUAL or EDITOR environment variable, see manual
-#set -g status-keys vi
-#set -g mode-keys vi
+set -g status-keys vi #!important
+setw -g mode-keys vi #!important
+
+# Send Escape immediately so Esc -> vi command mode works in bash/nvim inside tmux (WSL)
+set -s escape-time 0 #!important
+
+# Pass Ctrl+Arrow / modified keys as xterm sequences so zsh/nvim see them inside tmux
+setw -g xterm-keys on #!important
 
 # replace C-b by C-a instead of using both prefixes
 # set -gu prefix2
@@ -421,6 +427,18 @@ bind -n S-Enter send-keys S-Enter #!important
 # restore stock n/p window navigation (oh-my-tmux unbinds these)
 bind -r n next-window      #!important
 bind -r p previous-window  #!important
+
+# Ctrl+Backspace -> Alt+Backspace (word delete). Terminals often send ^H for
+# Ctrl+Backspace; Cursor agent / zsh treat Alt+Backspace as kill-word but
+# plain ^H as single-char delete. Covers both ^H and C-BSpace (extkeys).
+bind -n C-h send-keys M-BSpace      #!important
+bind -n C-BSpace send-keys M-BSpace #!important
+
+# PageUp/PageDown scroll tmux history without prefix/copy-mode ritual.
+# Pass through when the pane is in an alternate-screen app (vim, less, etc.).
+# -e exits copy mode once you page back to the live bottom.
+bind -n PageUp if-shell -F '#{alternate_on}' 'send-keys PageUp' 'copy-mode -eu' #!important
+bind -n PageDown if-shell -F '#{pane_in_mode}' 'send-keys -X page-down' 'send-keys PageDown' #!important
 
 # display a message after toggling mouse support
 bind m run "cut -c3- '#{TMUX_CONF}' | sh -s _toggle_mouse" \; display 'mouse #{?#{mouse},on,off}'
@@ -539,6 +557,9 @@ bind > command-prompt -p "send pane to:" "join-pane -h -t '%%'"
 # Smart automatic window naming (directory | command)
 set -g automatic-rename on
 set -g automatic-rename-format '#{b:pane_current_path} | #{pane_current_command}'
+
+# Shift+Enter newline for Cursor Agent CLI: Windows Terminal sends LF (\n).
+# Do not bind S-Enter here — a bad bind was inserting the literal text "S-Enter".
 
 # "$@"
 # # /!\ do not remove the previous line
