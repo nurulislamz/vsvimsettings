@@ -30,12 +30,6 @@ else
       require("nvim-tree.api").tree.toggle({ find_file = true, focus = true })
     end, { desc = "Toggle File Explorer" })
 
-    -- Window nav stays inside nvim (Ctrl-h reaches explorer); tmux panes use prefix+hjkl
-    map({ "n", "t" }, "<C-h>", "<C-w>h", { desc = "Go to left window" })
-    map({ "n", "t" }, "<C-j>", "<C-w>j", { desc = "Go to lower window" })
-    map({ "n", "t" }, "<C-k>", "<C-w>k", { desc = "Go to upper window" })
-    map({ "n", "t" }, "<C-l>", "<C-w>l", { desc = "Go to right window" })
-
     -- Custom Unified Window/Buffer Management (Tmux Synergy)
     map("n", "<leader>v", "<C-w>v", { desc = "Split window vertically" })
     map("n", "<leader>-", "<C-w>s", { desc = "Split window horizontally" })

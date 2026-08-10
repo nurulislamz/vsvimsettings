@@ -428,20 +428,21 @@ bind -n S-Enter send-keys S-Enter #!important
 bind -r n next-window      #!important
 bind -r p previous-window  #!important
 
-# Pane navigation: prefix+hjkl only. Bare Ctrl-hjkl must reach nvim (explorer).
-# Oh-my-tmux already binds prefix hjkl to select-pane; free root-table Ctrl-hjkl.
-unbind -n C-h
-unbind -n C-j
-unbind -n C-k
-unbind -n C-l
-# Oh-my-tmux clears history on bare C-l; free it for apps/shell.
-unbind -n C-l
-bind h select-pane -L #!important
-bind j select-pane -D #!important
-bind k select-pane -U #!important
-bind l select-pane -R #!important
+# Smart Ctrl-hjkl: Neovim gets the keys (splits/explorer); else move tmux panes.
+# See https://github.com/christoomey/vim-tmux-navigator
+# Prefix (Ctrl-b) + hjkl still works as an explicit pane move.
+is_vim="ps -o state= -o comm= -t '#{pane_tty}' | grep -iqE '^[^TXZ ]+ +(\\S+/)?g?(view|n?vim?x?)(diff)?$'"
+bind -n C-h if-shell "$is_vim" 'send-keys C-h' 'select-pane -L' #!important
+bind -n C-j if-shell "$is_vim" 'send-keys C-j' 'select-pane -D' #!important
+bind -n C-k if-shell "$is_vim" 'send-keys C-k' 'select-pane -U' #!important
+bind -n C-l if-shell "$is_vim" 'send-keys C-l' 'select-pane -R' #!important
+bind -n 'C-\\' if-shell "$is_vim" 'send-keys C-\\\\' 'select-pane -l' #!important
+bind -r h select-pane -L #!important
+bind -r j select-pane -D #!important
+bind -r k select-pane -U #!important
+bind -r l select-pane -R #!important
 
-# Ctrl+Backspace (extkeys) -> word delete. Do not bind -n C-h (steals from nvim).
+# Ctrl+Backspace word-delete for shell (extkeys). Do not remap bare C-h here.
 bind -n C-BSpace send-keys M-BSpace #!important
 
 # PageUp/PageDown scroll tmux history without prefix/copy-mode ritual.
