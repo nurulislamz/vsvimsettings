@@ -7,7 +7,7 @@ return {
     event = "InsertEnter",
     build = 'uv run --with "httpx[http2]" python -c "import httpx"',
     opts = {
-      -- cmp still owns <Tab>/<CR>; lsp.lua calls neocursor.accept() first when this is on.
+      -- Same Tab/CR path as Copilot ghost text: shared handler in lsp.lua.
       map_tab = false,
     },
     config = function(_, opts)
