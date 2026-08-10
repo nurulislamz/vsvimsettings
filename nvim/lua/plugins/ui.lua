@@ -1,15 +1,4 @@
 return {
-  {
-    "christoomey/vim-tmux-navigator",
-    lazy = false, 
-    keys = {
-      { "<c-h>", "<cmd><C-U>TmuxNavigateLeft<cr>", mode = { "n", "t" } },
-      { "<c-j>", "<cmd><C-U>TmuxNavigateDown<cr>", mode = { "n", "t" } },
-      { "<c-k>", "<cmd><C-U>TmuxNavigateUp<cr>", mode = { "n", "t" } },
-      { "<c-l>", "<cmd><C-U>TmuxNavigateRight<cr>", mode = { "n", "t" } },
-      { "<c-\\>", "<cmd><C-U>TmuxNavigatePrevious<cr>", mode = { "n", "t" } },
-    },
-  },
   { "nvim-lualine/lualine.nvim", cond = not vim.g.vscode, dependencies = { "nvim-tree/nvim-web-devicons" }, config = true },
   { 
     "nvim-tree/nvim-tree.lua", 
@@ -17,6 +6,7 @@ return {
     dependencies = { "nvim-tree/nvim-web-devicons" }, 
     config = function()
       require("nvim-tree").setup({
+        update_focused_file = { enable = true },
         actions = {
           open_file = {
             quit_on_open = false,
@@ -32,10 +22,16 @@ return {
           -- Enter = current window; Ctrl-t / Shift-Enter = new tab
           api.config.mappings.default_on_attach(bufnr)
 
+          local function open_keep_explorer()
+            api.node.open.edit(nil, { quit_on_open = false })
+          end
+          vim.keymap.set("n", "<CR>", open_keep_explorer, opts("Open"))
+          vim.keymap.set("n", "o", open_keep_explorer, opts("Open"))
+
           local function open_in_new_tab()
             local node = api.tree.get_node_under_cursor()
             if not node or node.name == ".." or node.nodes ~= nil then
-              api.node.open.edit()
+              api.node.open.edit(nil, { quit_on_open = false })
               return
             end
             local path = node.link_to or node.absolute_path

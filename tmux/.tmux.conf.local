@@ -428,10 +428,20 @@ bind -n S-Enter send-keys S-Enter #!important
 bind -r n next-window      #!important
 bind -r p previous-window  #!important
 
-# Ctrl+Backspace -> Alt+Backspace (word delete). Terminals often send ^H for
-# Ctrl+Backspace; Cursor agent / zsh treat Alt+Backspace as kill-word but
-# plain ^H as single-char delete. Covers both ^H and C-BSpace (extkeys).
-bind -n C-h send-keys M-BSpace      #!important
+# Pane navigation: prefix+hjkl only. Bare Ctrl-hjkl must reach nvim (explorer).
+# Oh-my-tmux already binds prefix hjkl to select-pane; free root-table Ctrl-hjkl.
+unbind -n C-h
+unbind -n C-j
+unbind -n C-k
+unbind -n C-l
+# Oh-my-tmux clears history on bare C-l; free it for apps/shell.
+unbind -n C-l
+bind h select-pane -L #!important
+bind j select-pane -D #!important
+bind k select-pane -U #!important
+bind l select-pane -R #!important
+
+# Ctrl+Backspace (extkeys) -> word delete. Do not bind -n C-h (steals from nvim).
 bind -n C-BSpace send-keys M-BSpace #!important
 
 # PageUp/PageDown scroll tmux history without prefix/copy-mode ritual.
