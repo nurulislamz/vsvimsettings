@@ -1,11 +1,14 @@
 return {
   {
     "teocns/neocursor.nvim",
-    cond = not vim.g.vscode,
+    cond = function()
+      return vim.g.ai_neocursor
+    end,
     event = "InsertEnter",
     build = 'uv run --with "httpx[http2]" python -c "import httpx"',
     opts = {
-      -- nvim-cmp owns <Tab>/<CR>; neocursor.accept() is tried first in lsp.lua
+      -- Keep map_tab false when cmp (and optionally copilot-cmp) owns <Tab>.
+      -- lsp.lua calls neocursor.accept() first so ghost text still accepts on Tab/CR.
       map_tab = false,
     },
     config = function(_, opts)

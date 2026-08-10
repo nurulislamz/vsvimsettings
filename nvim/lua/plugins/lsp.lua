@@ -3,17 +3,23 @@ return {
     {
         "neovim/nvim-lspconfig",
         cond = not vim.g.vscode,
-        dependencies = {
-            "mason-org/mason.nvim",
-            "mason-org/mason-lspconfig.nvim",
-            "hrsh7th/nvim-cmp",
-            "hrsh7th/cmp-nvim-lsp",
-            "hrsh7th/cmp-buffer",
-            "hrsh7th/cmp-path",
-            "hrsh7th/cmp-cmdline",
-            "L3MON4D3/LuaSnip",
-            "saadparwaiz1/cmp_luasnip",
-        },
+        dependencies = (function()
+            local deps = {
+                "mason-org/mason.nvim",
+                "mason-org/mason-lspconfig.nvim",
+                "hrsh7th/nvim-cmp",
+                "hrsh7th/cmp-nvim-lsp",
+                "hrsh7th/cmp-buffer",
+                "hrsh7th/cmp-path",
+                "hrsh7th/cmp-cmdline",
+                "L3MON4D3/LuaSnip",
+                "saadparwaiz1/cmp_luasnip",
+            }
+            if vim.g.ai_copilot then
+                table.insert(deps, "zbirenbaum/copilot-cmp")
+            end
+            return deps
+        end)(),
         config = function()
             local dotnet_tools = vim.fn.expand("~/.dotnet/tools")
             if vim.fn.isdirectory(dotnet_tools) == 1 and not string.find(vim.env.PATH, dotnet_tools, 1, true) then
@@ -103,10 +109,12 @@ return {
             local cmp = require("cmp")
 
             local function accept_completion(fallback)
-                -- neocursor first, then confirm cmp selection, else fallback
-                local ok, neocursor = pcall(require, "neocursor")
-                if ok and neocursor.accept and neocursor.accept() then
-                    return
+                -- neocursor ghost text first (when enabled), then cmp (incl. copilot-cmp)
+                if vim.g.ai_neocursor then
+                    local ok, neocursor = pcall(require, "neocursor")
+                    if ok and neocursor.accept and neocursor.accept() then
+                        return
+                    end
                 end
                 if cmp.visible() then
                     cmp.confirm({ select = true })
@@ -122,12 +130,19 @@ return {
                     ["<Tab>"] = cmp.mapping(accept_completion, { "i", "s" }),
                     ["<CR>"] = cmp.mapping(accept_completion, { "i", "s" }),
                 }),
-                sources = cmp.config.sources({
-                    { name = "nvim_lsp" },
-                    { name = "luasnip" },
-                    { name = "buffer" },
-                    { name = "path" }
-                }),
+                sources = cmp.config.sources((function()
+                    local sources = {}
+                    if vim.g.ai_copilot then
+                        table.insert(sources, { name = "copilot" })
+                    end
+                    vim.list_extend(sources, {
+                        { name = "nvim_lsp" },
+                        { name = "luasnip" },
+                        { name = "buffer" },
+                        { name = "path" },
+                    })
+                    return sources
+                end)()),
             })
 
             -- Cmdline setup for "/" and "?"
