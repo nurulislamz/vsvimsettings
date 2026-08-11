@@ -26,7 +26,9 @@ if vim.g.vscode then
     map("n", "<leader>rn", function() vscode.action("editor.action.rename") end, { desc = "Rename Symbol" })
     map("n", "<leader>ca", function() vscode.action("editor.action.quickFix") end, { desc = "Code Action" })
 else
-    map("n", "<leader>e", ":NvimTreeToggle<CR>", { desc = "Toggle File Explorer" })
+    map("n", "<leader>e", function()
+      require("nvim-tree.api").tree.toggle({ find_file = true, focus = true })
+    end, { desc = "Toggle File Explorer" })
 
     -- Custom Unified Window/Buffer Management (Tmux Synergy)
     map("n", "<leader>v", "<C-w>v", { desc = "Split window vertically" })

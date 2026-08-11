@@ -1,7 +1,8 @@
 return {
   {
     "christoomey/vim-tmux-navigator",
-    lazy = false, 
+    cond = not vim.g.vscode,
+    lazy = false,
     keys = {
       { "<c-h>", "<cmd><C-U>TmuxNavigateLeft<cr>", mode = { "n", "t" } },
       { "<c-j>", "<cmd><C-U>TmuxNavigateDown<cr>", mode = { "n", "t" } },
@@ -17,6 +18,7 @@ return {
     dependencies = { "nvim-tree/nvim-web-devicons" }, 
     config = function()
       require("nvim-tree").setup({
+        update_focused_file = { enable = true },
         actions = {
           open_file = {
             quit_on_open = false,
@@ -29,19 +31,31 @@ return {
             return { desc = "nvim-tree: " .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
           end
 
-          -- Enter = current window; Ctrl-t / Shift-Enter = new tab
+          -- Enter = current window; Ctrl-t / Shift-Enter = tab drop (reuse tab, no blank)
           api.config.mappings.default_on_attach(bufnr)
 
+          local function open_keep_explorer()
+            api.node.open.edit(nil, { quit_on_open = false })
+          end
+          vim.keymap.set("n", "<CR>", open_keep_explorer, opts("Open"))
+          vim.keymap.set("n", "o", open_keep_explorer, opts("Open"))
+
+          -- Override default <C-t> (tabnew + edit) which often leaves a blank [No Name] tab.
           local function open_in_new_tab()
             local node = api.tree.get_node_under_cursor()
             if not node or node.name == ".." or node.nodes ~= nil then
-              api.node.open.edit()
+              api.node.open.edit(node, { quit_on_open = false })
               return
             end
-            local path = node.link_to or node.absolute_path
-            vim.cmd("tab drop " .. vim.fn.fnameescape(path))
+            if api.node.open.tab_drop then
+              api.node.open.tab_drop(node, { quit_on_open = false })
+            else
+              local path = node.link_to or node.absolute_path
+              vim.cmd("tab drop " .. vim.fn.fnameescape(path))
+            end
           end
 
+          vim.keymap.set("n", "<C-t>", open_in_new_tab, opts("Open in new tab"))
           vim.keymap.set("n", "<S-CR>", open_in_new_tab, opts("Open in new tab"))
         end,
       })
