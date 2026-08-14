@@ -18,7 +18,9 @@ return {
     dependencies = { "nvim-tree/nvim-web-devicons" }, 
     config = function()
       require("nvim-tree").setup({
-        update_focused_file = { enable = true },
+        update_focused_file = { enable = true, update_root = true },
+        sync_root_with_cwd = true,
+        hijack_cursor = false,
         actions = {
           open_file = {
             quit_on_open = false,
@@ -35,7 +37,14 @@ return {
           api.config.mappings.default_on_attach(bufnr)
 
           local function open_keep_explorer()
-            api.node.open.edit(nil, { quit_on_open = false })
+            local node = api.tree.get_node_under_cursor()
+            if node and node.nodes == nil and node.name ~= ".." then
+              local path = node.link_to or node.absolute_path
+              vim.cmd("wincmd l")
+              vim.cmd("edit " .. vim.fn.fnameescape(path))
+            else
+              api.node.open.edit()
+            end
           end
           vim.keymap.set("n", "<CR>", open_keep_explorer, opts("Open"))
           vim.keymap.set("n", "o", open_keep_explorer, opts("Open"))
@@ -64,7 +73,8 @@ return {
   { "folke/tokyonight.nvim", cond = not vim.g.vscode, lazy = false, priority = 1000, config = function() vim.cmd([[colorscheme tokyonight]]) end },
   { 
     "folke/which-key.nvim", 
-    event = "VeryLazy", 
+    lazy = false,
+    priority = 900,
     init = function() 
       vim.o.timeout = true; 
       vim.o.timeoutlen = 500 
