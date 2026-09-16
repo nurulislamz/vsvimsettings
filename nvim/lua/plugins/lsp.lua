@@ -40,6 +40,7 @@ return {
             local capabilities = require("cmp_nvim_lsp").default_capabilities()
             local servers = {
                 "lua_ls",
+                "ts_ls",
                 "gopls",
                 "clangd",
                 "rust_analyzer",
@@ -58,11 +59,28 @@ return {
                         return { buffer = event.buf, desc = "LSP: " .. desc }
                     end
 
-                    vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts("Go to Definition"))
-                    vim.keymap.set("n", "gr", function()
+                    -- Clean up any Neovim 0.11+ buffer-local defaults that interfere with gr
+                    pcall(vim.keymap.del, "n", "grr", { buffer = event.buf })
+                    pcall(vim.keymap.del, "n", "gra", { buffer = event.buf })
+                    pcall(vim.keymap.del, "n", "gri", { buffer = event.buf })
+                    pcall(vim.keymap.del, "n", "grn", { buffer = event.buf })
+                    pcall(vim.keymap.del, "n", "grt", { buffer = event.buf })
+
+                    local smart_gd = require("config.keymaps").smart_goto_definition
+                    vim.keymap.set("n", "gd", smart_gd or vim.lsp.buf.definition, opts("Go to Definition / References at Root"))
+                    vim.keymap.set("n", "gr", vim.lsp.buf.references, opts("Go to References (Submenu)"))
+                    vim.keymap.set("n", "gi", function()
+                        require("telescope.builtin").lsp_implementations({ reuse_win = true })
+                    end, opts("Go to Implementation"))
+                    vim.keymap.set("n", "gy", function()
+                        require("telescope.builtin").lsp_type_definitions({ reuse_win = true })
+                    end, opts("Go to Type Definition"))
+                    vim.keymap.set("n", "<leader>gr", function()
                         require("telescope.builtin").lsp_references()
-                    end, opts("Go to References"))
-                    vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts("Go to Implementation"))
+                    end, opts("Go to References (Telescope)"))
+                    vim.keymap.set("n", "<leader>gd", function()
+                        require("telescope.builtin").lsp_definitions({ reuse_win = true })
+                    end, opts("Go to Definition (Telescope)"))
                     vim.keymap.set("n", "K", vim.lsp.buf.hover, opts("Hover Documentation"))
                     vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts("Rename Symbol"))
                     vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, opts("Code Action"))

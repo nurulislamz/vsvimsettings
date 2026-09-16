@@ -4,6 +4,7 @@ return {
   event = "VeryLazy",
   config = function()
     require("neoclip").setup({
+      default_register = { '"', '+', '*' },
       keys = {
         telescope = {
           i = {
@@ -21,6 +22,6 @@ return {
     require("telescope").load_extension("neoclip")
   end,
   keys = {
-    { "<leader>p", "<cmd>Telescope neoclip<cr>", desc = "Clipboard History" },
+    { "<leader>p", "<cmd>Telescope neoclip<cr>", desc = "Search paste buffer" },
   },
 }

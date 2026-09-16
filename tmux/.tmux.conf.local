@@ -403,12 +403,11 @@ set -s escape-time 0 #!important
 # Pass Ctrl+Arrow / modified keys as xterm sequences so zsh/nvim see them inside tmux
 setw -g xterm-keys on #!important
 
-# replace C-b by C-a instead of using both prefixes
-# set -gu prefix2
-# unbind C-a
-# unbind C-b
-# set -g prefix C-a
-# bind C-a send-prefix
+# oh-my-tmux sets prefix2 C-a. Keep Ctrl-B only (the repo-root .tmux.conf is not sourced).
+set -gu prefix2 #!important
+unbind C-a #!important
+set -g prefix C-b #!important
+bind C-b send-prefix #!important
 
 # if you don't want Oh my tmux! to alter a binding or a setting, use #!important
 # bind c new-window -c '#{pane_current_path}' #!important
@@ -421,7 +420,9 @@ set -g extended-keys on #!important
 %endif
 %if #{>=:#{version},3.2}
 set -as terminal-features ',xterm*:extkeys,tmux*:extkeys,screen*:extkeys,alacritty*:extkeys,kitty*:extkeys,wezterm*:extkeys,ghostty*:extkeys' #!important
-bind -n S-Enter send-keys S-Enter #!important
+# Windows Terminal / Cursor send CSI-u for Shift+Enter. Do not `send-keys S-Enter`:
+# tmux treats that as the literal text "S-Enter" in agent TUIs.
+bind -n S-Enter send-keys Escape "[13;2u" #!important
 %endif
 
 # restore stock n/p window navigation (oh-my-tmux unbinds these)
@@ -431,9 +432,11 @@ bind -r p previous-window  #!important
 # Smart Ctrl-hjkl: Neovim gets the keys (splits/explorer); else move tmux panes.
 # See https://github.com/christoomey/vim-tmux-navigator
 # Prefix (Ctrl-b) + hjkl still works as an explicit pane move.
+# C-j is also newline in Cursor Agent CLI (often `bwrap`), so pass it through on
+# the alternate screen instead of always treating non-vim as pane-down.
 is_vim="ps -o state= -o comm= -t '#{pane_tty}' | grep -iqE '^[^TXZ ]+ +(\\S+/)?g?(view|n?vim?x?)(diff)?$'"
 bind -n C-h if-shell "$is_vim" 'send-keys C-h' 'select-pane -L' #!important
-bind -n C-j if-shell "$is_vim" 'send-keys C-j' 'select-pane -D' #!important
+bind -n C-j if-shell -F '#{alternate_on}' 'send-keys C-j' "if-shell \"$is_vim\" 'send-keys C-j' 'select-pane -D'" #!important
 bind -n C-k if-shell "$is_vim" 'send-keys C-k' 'select-pane -U' #!important
 bind -n C-l if-shell "$is_vim" 'send-keys C-l' 'select-pane -R' #!important
 bind -n 'C-\\' if-shell "$is_vim" 'send-keys C-\\\\' 'select-pane -l' #!important
@@ -450,6 +453,18 @@ bind -n C-BSpace send-keys M-BSpace #!important
 # -e exits copy mode once you page back to the live bottom.
 bind -n PageUp if-shell -F '#{alternate_on}' 'send-keys PageUp' 'copy-mode -eu' #!important
 bind -n PageDown if-shell -F '#{pane_in_mode}' 'send-keys -X page-down' 'send-keys PageDown' #!important
+
+# Ctrl+u / Ctrl+d half-page scroll tmux history without prefix/copy-mode ritual.
+# Pass through when the pane is in an alternate-screen app (vim, less, etc.).
+# -e exits copy mode once you page back to the live bottom.
+bind -n C-u if-shell -F '#{alternate_on}' 'send-keys C-u' 'copy-mode -e ; send-keys -X halfpage-up' #!important
+bind -n C-d if-shell -F '#{pane_in_mode}' 'send-keys -X halfpage-down' 'send-keys C-d' #!important
+
+# Ensure both vi and emacs copy-mode key tables support Ctrl+u / Ctrl+d
+bind -T copy-mode-vi C-u send-keys -X halfpage-up #!important
+bind -T copy-mode-vi C-d send-keys -X halfpage-down #!important
+bind -T copy-mode C-u send-keys -X halfpage-up #!important
+bind -T copy-mode C-d send-keys -X halfpage-down #!important
 
 # display a message after toggling mouse support
 bind m run "cut -c3- '#{TMUX_CONF}' | sh -s _toggle_mouse" \; display 'mouse #{?#{mouse},on,off}'
@@ -498,9 +513,9 @@ tmux_conf_uninstall_plugins_on_reload=true
 # visit https://github.com/tmux-plugins for available plugins
 #set -g @plugin 'tmux-plugins/tmux-copycat'
 #set -g @plugin 'tmux-plugins/tmux-cpu'
-#set -g @plugin 'tmux-plugins/tmux-resurrect'
-#set -g @plugin 'tmux-plugins/tmux-continuum'
-#set -g @continuum-restore 'on'
+set -g @plugin 'tmux-plugins/tmux-resurrect'
+set -g @plugin 'tmux-plugins/tmux-continuum'
+set -g @continuum-restore 'on'
 
 # re-added from previous config (which-key only; catppuccin dropped — conflicts with oh-my-tmux theme)
 set -g @plugin 'alexwforsythe/tmux-which-key'   # prefix + Space -> popup menu
@@ -511,6 +526,10 @@ bind x kill-pane
 # join-pane: pull a pane FROM another window / send current pane TO another window
 bind < command-prompt -p "join pane from:" "join-pane -h -s '%%'"
 bind > command-prompt -p "send pane to:" "join-pane -h -t '%%'"
+
+# swap window left/right with { and }
+bind -r '{' swap-window -t -1\; select-window -t -1
+bind -r '}' swap-window -t +1\; select-window -t +1
 
 
 # -- custom variables ----------------------------------------------------------
@@ -569,8 +588,7 @@ bind > command-prompt -p "send pane to:" "join-pane -h -t '%%'"
 set -g automatic-rename on
 set -g automatic-rename-format '#{b:pane_current_path} | #{pane_current_command}'
 
-# Shift+Enter newline for Cursor Agent CLI: Windows Terminal sends LF (\n).
-# Do not bind S-Enter here — a bad bind was inserting the literal text "S-Enter".
+# Shift+Enter newline for Cursor Agent CLI is bound above as CSI-u, not `S-Enter`.
 
 # "$@"
 # # /!\ do not remove the previous line
