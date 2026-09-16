@@ -1,7 +1,10 @@
 local map = vim.keymap.set
 local smart_goto_definition = nil
 
-map("n", "<leader>nh", ":nohl<CR>", { desc = "Clear search highlights" })
+-- Clear search highlights with Esc or <leader>h / <leader>nh
+map("n", "<Esc>", "<cmd>nohlsearch<CR>", { desc = "Clear search highlights" })
+map("n", "<leader>h", "<cmd>nohlsearch<CR>", { desc = "Clear search highlights" })
+map("n", "<leader>nh", "<cmd>nohlsearch<CR>", { desc = "Clear search highlights" })
 
 -- ==========================================
 -- Clipboard & Paste Buffer Management
