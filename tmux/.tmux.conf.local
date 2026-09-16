@@ -387,7 +387,7 @@ tmux_conf_urlscan_options="--compact --dedupe"
 # this is the place to override or undo settings
 
 # increase history size
-#set -g history-limit 10000
+set -g history-limit 10000
 
 # start with mouse mode enabled
 set -g mouse on
@@ -436,7 +436,7 @@ bind -n C-h if-shell "$is_vim" 'send-keys C-h' 'select-pane -L' #!important
 bind -n C-j if-shell "$is_vim" 'send-keys C-j' 'select-pane -D' #!important
 bind -n C-k if-shell "$is_vim" 'send-keys C-k' 'select-pane -U' #!important
 bind -n C-l if-shell "$is_vim" 'send-keys C-l' 'select-pane -R' #!important
-bind -n 'C-\\' if-shell "$is_vim" 'send-keys C-\\\\' 'select-pane -l' #!important
+bind -n 'C-\' if-shell "$is_vim" 'send-keys C-\\' 'select-pane -l' #!important
 bind -r h select-pane -L #!important
 bind -r j select-pane -D #!important
 bind -r k select-pane -U #!important
@@ -511,6 +511,10 @@ bind x kill-pane
 # join-pane: pull a pane FROM another window / send current pane TO another window
 bind < command-prompt -p "join pane from:" "join-pane -h -s '%%'"
 bind > command-prompt -p "send pane to:" "join-pane -h -t '%%'"
+
+# swap window left/right
+bind -r '{' swap-window -t -1 \; select-window -t -1
+bind -r '}' swap-window -t +1 \; select-window -t +1
 
 
 # -- custom variables ----------------------------------------------------------
