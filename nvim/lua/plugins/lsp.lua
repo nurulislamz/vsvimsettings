@@ -52,6 +52,82 @@ return {
                 automatic_enable = false,
             })
 
+            -- Helper: find project virtualenv python executable by walking ancestors
+            local function is_file(path)
+                return vim.fn.filereadable(path) == 1
+            end
+
+            local function find_ancestor_with(start, names)
+                local dir = start
+                if not dir or dir == vim.NIL or dir == "" then
+                    dir = vim.fn.getcwd()
+                end
+                while dir and dir ~= "/" do
+                    for _, name in ipairs(names) do
+                        local candidate = dir .. "/" .. name
+                        if is_file(candidate) or vim.fn.isdirectory(candidate) == 1 then
+                            return dir
+                        end
+                    end
+                    local parent = vim.fn.fnamemodify(dir, ':h')
+                    if parent == dir then break end
+                    dir = parent
+                end
+                return nil
+            end
+
+            local function find_project_python(root)
+                -- try to find nearest project root that contains a known marker
+                local markers = { ".venv", "venv", "env", "pyproject.toml", "poetry.lock", "setup.cfg", "setup.py" }
+                local project_root = find_ancestor_with(root, markers)
+
+                -- If the server root didn't help, try from the current buffer's path
+                if not project_root or project_root == nil then
+                    local bufname = vim.api.nvim_buf_get_name(0)
+                    if bufname and bufname ~= "" then
+                        local bufdir = vim.fn.fnamemodify(bufname, ':h')
+                        project_root = find_ancestor_with(bufdir, markers)
+                    end
+                end
+
+                if project_root then
+                    -- prefer local venv dirs
+                    for _, v in ipairs({".venv", "venv", "env"}) do
+                        local py = project_root .. "/" .. v .. "/bin/python"
+                        if is_file(py) then
+                            return py
+                        end
+                    end
+                end
+
+                -- fall back to VIRTUAL_ENV if set
+                if vim.env.VIRTUAL_ENV and is_file(vim.env.VIRTUAL_ENV .. "/bin/python") then
+                    return vim.env.VIRTUAL_ENV .. "/bin/python"
+                end
+
+                -- as a last resort, try to find in workspace-level .venv (current working dir)
+                local ws_py = vim.fn.getcwd() .. "/.venv/bin/python"
+                if is_file(ws_py) then return ws_py end
+
+                -- fallback to system python3/python
+                local py3 = vim.fn.exepath("python3")
+                if py3 ~= "" then return py3 end
+                return vim.fn.exepath("python")
+            end
+
+            -- pyright config to prefer project venv when present
+            local pyright_config = {
+                capabilities = capabilities,
+                on_new_config = function(new_config, root_dir)
+                    local python_path = find_project_python(root_dir)
+                    new_config.settings = new_config.settings or {}
+                    new_config.settings.python = new_config.settings.python or {}
+                    if python_path then
+                        new_config.settings.python.pythonPath = python_path
+                    end
+                end,
+            }
+
             vim.api.nvim_create_autocmd("LspAttach", {
                 callback = function(event)
                     local opts = function(desc)
@@ -84,16 +160,28 @@ return {
                     vim.lsp.config("roslyn", { capabilities = capabilities })
                 end
 
+                -- Configure pyright to prefer project venv when available
+                vim.lsp.config("pyright", pyright_config)
+
                 for _, server in ipairs(servers) do
-                    vim.lsp.config(server, { capabilities = capabilities })
-                    vim.lsp.enable(server)
+                    if server ~= "pyright" then
+                        vim.lsp.config(server, { capabilities = capabilities })
+                        vim.lsp.enable(server)
+                    else
+                        -- ensure pyright enabled
+                        vim.lsp.enable("pyright")
+                    end
                 end
                 -- Explicitly disable omnisharp to avoid interference with easy-dotnet
                 vim.lsp.config("omnisharp", { autostart = false })
             else
                 local lspconfig = require("lspconfig")
                 for _, server in ipairs(servers) do
-                    lspconfig[server].setup({ capabilities = capabilities })
+                    if server == "pyright" then
+                        lspconfig.pyright.setup(pyright_config)
+                    else
+                        lspconfig[server].setup({ capabilities = capabilities })
+                    end
                 end
                 -- Explicitly disable omnisharp to avoid interference with easy-dotnet
                 lspconfig.omnisharp.setup({ autostart = false })
