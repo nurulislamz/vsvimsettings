@@ -119,6 +119,19 @@ return {
             -- pyright config to prefer project venv when present
             local pyright_config = {
                 capabilities = capabilities,
+                before_init = function(_, config)
+                    local python_path = find_project_python(config.root_dir)
+                    config.settings = config.settings or {}
+                    config.settings.python = config.settings.python or {}
+                    if python_path then
+                        config.settings.python.pythonPath = python_path
+                    end
+                end,
+                on_init = function(client)
+                    if client.config.settings and client.config.settings.python then
+                        client.notify("workspace/didChangeConfiguration", { settings = client.config.settings })
+                    end
+                end,
                 on_new_config = function(new_config, root_dir)
                     local python_path = find_project_python(root_dir)
                     new_config.settings = new_config.settings or {}
@@ -262,11 +275,38 @@ return {
                 matching = { disallow_symbol_nonprefix_matching = false }
             })
 
+            -- Diagnostic appearance & behavior
+            vim.diagnostic.config({
+                virtual_text = {
+                    prefix = "● ",
+                    severity = { min = vim.diagnostic.severity.HINT },
+                },
+                signs = {
+                    text = {
+                        [vim.diagnostic.severity.ERROR] = "✘",
+                        [vim.diagnostic.severity.WARN] = "▲",
+                        [vim.diagnostic.severity.HINT] = "⚑",
+                        [vim.diagnostic.severity.INFO] = "»",
+                    },
+                },
+                underline = true,
+                update_in_insert = false,
+                severity_sort = true,
+                float = {
+                    focused = false,
+                    style = "minimal",
+                    border = "rounded",
+                    source = "always",
+                    header = "",
+                    prefix = "",
+                },
+            })
+
             -- Auto-show diagnostic float when cursor rests on a line with an error
             vim.o.updatetime = 500
             vim.api.nvim_create_autocmd("CursorHold", {
                 callback = function()
-                    vim.diagnostic.open_float(nil, { focus = false, scope = "cursor" })
+                    vim.diagnostic.open_float(nil, { focus = false, scope = "line" })
                 end,
             })
 
