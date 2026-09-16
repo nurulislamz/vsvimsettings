@@ -77,8 +77,8 @@ end
 if vim.g.vscode then
     local vscode = require('vscode')
 
-    -- File Explorer
-    map("n", "<leader>e", function() vscode.action("workbench.action.toggleSidebarVisibility") end, { desc = "Toggle File Explorer" })
+    -- File Explorer (Reveal active file in VS Code sidebar)
+    map("n", "<leader>e", function() vscode.action("workbench.files.action.showActiveFileInExplorer") end, { desc = "Reveal File in Explorer" })
 
     -- Window/Buffer Management (VS Code equivalent)
     map("n", "<leader>v", function() vscode.action("workbench.action.splitEditor") end, { desc = "Split window vertically" })
@@ -103,17 +103,12 @@ if vim.g.vscode then
 else
     map("n", "<leader>e", function()
       local api = require("nvim-tree.api")
-      if api.tree.is_visible() then
-        if vim.bo.filetype == "NvimTree" then
-          api.tree.close()
-        else
-          api.tree.focus()
-          api.tree.find_file({ open = true, focus = true })
-        end
+      if vim.bo.filetype == "NvimTree" then
+        api.tree.close()
       else
-        api.tree.open({ find_file = true, focus = true })
+        api.tree.find_file({ open = true, focus = true })
       end
-    end, { desc = "Toggle / Focus File Explorer" })
+    end, { desc = "Toggle / Focus File Explorer at Current File" })
 
     -- Custom Unified Window/Buffer Management (Tmux Synergy)
     map("n", "<leader>v", "<C-w>v", { desc = "Split window vertically" })
