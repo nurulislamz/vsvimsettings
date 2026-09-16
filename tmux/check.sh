@@ -9,7 +9,7 @@ tmux -L $SOCK kill-server 2>/dev/null || true
 
 tmux -L $SOCK -f /dev/null new-session -d -x 200 -y 50
 errs=$(tmux -L $SOCK source-file -v "$HOME/.tmux.conf.local" 2>&1 \
-       | grep -viE '^/.*: (set|bind|setw|if-shell|run-shell|source)' || true)
+       | grep -viE '^/.*: (set|bind|unbind|setw|if-shell|run-shell|source)' || true)
 [ -z "$errs" ] || { echo "FAIL: .tmux.conf.local has errors:"; echo "$errs"; exit 1; }
 
 check() { # label expected actual

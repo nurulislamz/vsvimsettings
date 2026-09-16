@@ -52,6 +52,9 @@ return {
           -- nvim 0.12's open_floating_preview errors and docs look broken.
           "markdown",
           "markdown_inline",
+          "html",
+          "typst",
+          "yaml",
           "python",
           "rust",
           "vim",

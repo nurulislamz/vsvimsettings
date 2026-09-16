@@ -11,7 +11,21 @@ return {
       { "<c-\\>", "<cmd><C-U>TmuxNavigatePrevious<cr>", mode = { "n", "t" } },
     },
   },
-  { "nvim-lualine/lualine.nvim", cond = not vim.g.vscode, dependencies = { "nvim-tree/nvim-web-devicons" }, config = true },
+  {
+    "nvim-lualine/lualine.nvim",
+    cond = not vim.g.vscode,
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    opts = {
+      sections = {
+        lualine_c = {
+          {
+            "filename",
+            path = 1, -- 0: Just filename, 1: Relative path, 2: Absolute path, 3: Absolute path with ~, 4: Filename and parent dir
+          },
+        },
+      },
+    },
+  },
   { 
     "nvim-tree/nvim-tree.lua", 
     cond = not vim.g.vscode, 
@@ -40,7 +54,23 @@ return {
             local node = api.tree.get_node_under_cursor()
             if node and node.nodes == nil and node.name ~= ".." then
               local path = node.link_to or node.absolute_path
-              vim.cmd("wincmd l")
+              local tree_win = vim.api.nvim_get_current_win()
+              local target_win = nil
+              for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+                if win ~= tree_win then
+                  local buf = vim.api.nvim_win_get_buf(win)
+                  if vim.bo[buf].buftype == "" and vim.bo[buf].filetype ~= "NvimTree" then
+                    target_win = win
+                    break
+                  end
+                end
+              end
+              if target_win then
+                vim.api.nvim_set_current_win(target_win)
+              else
+                vim.cmd("wincmd v")
+                vim.cmd("wincmd l")
+              end
               vim.cmd("edit " .. vim.fn.fnameescape(path))
             else
               api.node.open.edit()
@@ -81,7 +111,19 @@ return {
     end, 
     opts = {} 
   },
-  { "RRethy/vim-illuminate", lazy = false, event = { "BufReadPost", "BufNewFile" }, config = function() require("illuminate").configure() end },
+  {
+    "RRethy/vim-illuminate",
+    cond = not vim.g.vscode,
+    lazy = false,
+    event = { "BufReadPost", "BufNewFile" },
+    opts = {
+      delay = 200,
+      large_file_cutoff = 2000,
+    },
+    config = function(_, opts)
+      require("illuminate").configure(opts)
+    end,
+  },
   {
     "rcarriga/nvim-notify",
     cond = not vim.g.vscode,

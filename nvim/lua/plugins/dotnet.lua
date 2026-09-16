@@ -38,10 +38,17 @@ return {
               local map = function(keys, func, desc)
                 vim.keymap.set("n", keys, func, { buffer = bufnr, desc = "LSP: " .. desc })
               end
-              -- Fix gr and gd here within easy-dotnet lsp setup
-              map("gd", vim.lsp.buf.definition, "Go to Definition")
-              map("gr", function() require("telescope.builtin").lsp_references() end, "Go to References")
-              map("gi", vim.lsp.buf.implementation, "Go to Implementation")
+              pcall(vim.keymap.del, "n", "grr", { buffer = bufnr })
+              pcall(vim.keymap.del, "n", "gra", { buffer = bufnr })
+              pcall(vim.keymap.del, "n", "gri", { buffer = bufnr })
+              pcall(vim.keymap.del, "n", "grn", { buffer = bufnr })
+              pcall(vim.keymap.del, "n", "grt", { buffer = bufnr })
+
+              local smart_gd = require("config.keymaps").smart_goto_definition
+              map("gd", smart_gd or vim.lsp.buf.definition, "Go to Definition / References at Root")
+              map("gr", vim.lsp.buf.references, "Go to References")
+              map("gi", function() require("telescope.builtin").lsp_implementations({ reuse_win = true }) end, "Go to Implementation")
+              map("gy", function() require("telescope.builtin").lsp_type_definitions({ reuse_win = true }) end, "Go to Type Definition")
               map("K", vim.lsp.buf.hover, "Hover Doc")
               map("<leader>ca", vim.lsp.buf.code_action, "Code Action")
               map("<leader>rn", vim.lsp.buf.rename, "Rename Symbol")

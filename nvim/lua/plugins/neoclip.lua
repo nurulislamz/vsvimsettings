@@ -4,6 +4,7 @@ return {
   event = "VeryLazy",
   config = function()
     require("neoclip").setup({
+      default_register = { '"', '+', '*' },
       -- Only capture yanks, not deletes/changes; skip empty/whitespace-only
       filter = function(data)
         if data.event.operator ~= "y" then return false end
@@ -35,6 +36,6 @@ return {
         sorting_strategy = "ascending",
         layout_config = { prompt_position = "top" },
       })
-    end, desc = "Clipboard History" },
+    end, desc = "Search paste buffer" },
   },
 }

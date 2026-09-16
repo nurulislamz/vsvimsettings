@@ -51,6 +51,17 @@ return {
           end)
         end,
       })
+      -- Close NvimTree before saving sessions so zombie tree buffers aren't restored
+      vim.api.nvim_create_autocmd("User", {
+        pattern = "PersistenceSavePre",
+        callback = function()
+          pcall(function()
+            if require("nvim-tree.api").tree.is_visible() then
+              require("nvim-tree.api").tree.close()
+            end
+          end)
+        end,
+      })
     end,
   },
 }
