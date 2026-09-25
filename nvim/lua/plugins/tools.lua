@@ -7,7 +7,12 @@ return {
     dependencies = { "nvim-lua/plenary.nvim" }, 
     keys = { { "<leader>gg", "<cmd>LazyGit<cr>", desc = "Open LazyGit" } } 
   },
-  { "sindrets/diffview.nvim", cond = not vim.g.vscode, dependencies = { "nvim-lua/plenary.nvim" } },
+  {
+    "esmuellert/codediff.nvim",
+    cmd = "CodeDiff",
+    cond = not vim.g.vscode,
+    opts = {},
+  },
   { "lewis6991/gitsigns.nvim", cond = not vim.g.vscode, config = true },
   {
     "stevearc/conform.nvim",
