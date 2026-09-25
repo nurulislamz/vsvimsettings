@@ -1,9 +1,8 @@
 local map = vim.keymap.set
 local smart_goto_definition = nil
 
--- Clear search highlights with Esc or <leader>h / <leader>nh
+-- Clear search highlights with Esc or <leader>nh
 map("n", "<Esc>", "<cmd>nohlsearch<CR>", { desc = "Clear search highlights" })
-map("n", "<leader>h", "<cmd>nohlsearch<CR>", { desc = "Clear search highlights" })
 map("n", "<leader>nh", "<cmd>nohlsearch<CR>", { desc = "Clear search highlights" })
 
 -- ==========================================
@@ -335,6 +334,27 @@ else
     map("n", "<leader>rn", vim.lsp.buf.rename, { desc = "Rename Symbol" })
     map("n", "<leader>ca", vim.lsp.buf.code_action, { desc = "Code Action" })
     map("n", "gl", vim.diagnostic.open_float, { desc = "Show Line Diagnostics" })
+
+    -- Recover pyright after edits made outside nvim (agents, git, etc.):
+    -- reload on-disk changes into buffers, and restart a stale server on demand.
+    vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHoldI" }, {
+      callback = function()
+        if vim.fn.mode() ~= "c" then
+          vim.cmd("checktime")
+        end
+      end,
+    })
+
+    -- After a buffer is reloaded from disk, nudge pyright to re-resolve its
+    -- cross-file type cache (fixes stale "parameter not found" on imports).
+    vim.api.nvim_create_autocmd("FileChangedShellPost", {
+      callback = function()
+        for _, client in ipairs(vim.lsp.get_clients({ name = "pyright" })) do
+          client:notify("workspace/didChangeConfiguration", { settings = client.config.settings })
+        end
+      end,
+    })
+    map("n", "<leader>lr", "<cmd>LspRestart<CR>", { desc = "Restart LSP server" })
 
     -- Open file under cursor in new tab
     map("n", "<S-CR>", function()

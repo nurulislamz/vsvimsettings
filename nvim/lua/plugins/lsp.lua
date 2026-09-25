@@ -38,6 +38,14 @@ return {
 
             local lspconfig = require("lspconfig")
             local capabilities = require("cmp_nvim_lsp").default_capabilities()
+            -- Neovim hardcodes didChangeWatchedFiles off on Linux (vim/lsp/protocol.lua),
+            -- even though the inotify backend is available. Force it on so pyright
+            -- sees file changes made outside nvim (agents, git) without a server restart.
+            if vim.fn.has("linux") == 1 and vim.fn.executable("inotifywait") == 1 then
+                capabilities.workspace = capabilities.workspace or {}
+                capabilities.workspace.didChangeWatchedFiles =
+                    { dynamicRegistration = true, relativePatternSupport = true }
+            end
             local servers = {
                 "lua_ls",
                 "ts_ls",

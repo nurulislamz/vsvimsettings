@@ -104,17 +104,4 @@ return {
     keys = { { "<leader>xx", "<cmd>Trouble diagnostics toggle<cr>", desc = "Diagnostics (Trouble)" } }, 
     opts = {} 
   },
-  {
-    "ThePrimeagen/harpoon",
-    branch = "harpoon2",
-    dependencies = { "nvim-lua/plenary.nvim" },
-    config = function()
-      local harpoon = require("harpoon")
-      harpoon:setup()
-      vim.keymap.set("n", "<leader>ha", function() harpoon:list():add() end, { desc = "Harpoon Add" })
-      vim.keymap.set("n", "<leader>hm", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end, { desc = "Harpoon Menu" })
-      vim.keymap.set("n", "<C-1>", function() harpoon:list():select(1) end, { desc = "Harpoon File 1" })
-      vim.keymap.set("n", "<C-2>", function() harpoon:list():select(2) end, { desc = "Harpoon File 2" })
-    end,
-  }
 }

@@ -160,5 +160,11 @@ return {
         },
       })
     end
-  }
+  },
+  {
+    "diegok/live-autoread.nvim",
+    cond = not vim.g.vscode,
+    event = "BufReadPost",
+    opts = {},
+  },
 }

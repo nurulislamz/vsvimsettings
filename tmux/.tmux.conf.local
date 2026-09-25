@@ -531,6 +531,9 @@ bind > command-prompt -p "send pane to:" "join-pane -h -t '%%'"
 bind -r '{' swap-window -t -1 \; select-window -t -1
 bind -r '}' swap-window -t +1 \; select-window -t +1
 
+# Press Alt + d to instantly bounce back and forth between your last two windows
+bind-key -n M-d last-window #!important
+
 
 # -- custom variables ----------------------------------------------------------
 
