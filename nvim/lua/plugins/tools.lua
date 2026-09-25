@@ -11,7 +11,30 @@ return {
     "esmuellert/codediff.nvim",
     cmd = "CodeDiff",
     cond = not vim.g.vscode,
-    opts = {},
+    opts = {
+      diff = {
+        layout = "side-by-side",
+        compute_moves = true,
+        gutter_signs = true,
+        cycle_hunks_across_files = true,
+      },
+      explorer = {
+        view_mode = "tree",
+        flatten_dirs = true,
+        auto_refresh = true,
+        indent_markers = true,
+        line_stats = {
+          enabled = true,
+          count_untracked = true,
+        },
+      },
+      history = {
+        view_mode = "tree",
+      },
+    },
+    keys = {
+      { "<leader>cd", "<cmd>CodeDiff<cr>", desc = "Open CodeDiff" },
+    },
   },
   { "lewis6991/gitsigns.nvim", cond = not vim.g.vscode, config = true },
   {

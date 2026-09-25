@@ -380,6 +380,9 @@ else
     vim.api.nvim_create_user_command("ReloadConfig", reload_config, { desc = "Hot reload Neovim configuration" })
     map("n", "<leader><leader>r", reload_config, { desc = "Hot reload configuration" })
     map("n", "<leader><leader>R", "<cmd>restart<cr>", { desc = "Restart Neovim instance (0.12+)" })
+
+    -- Command-line abbreviation: typing lowercase :codediff expands to :CodeDiff
+    vim.cmd([[cnoreabbrev <expr> codediff (getcmdtype() == ':' && getcmdline() =~ '^codediff') ? 'CodeDiff' : 'codediff']])
 end
 
 return {
