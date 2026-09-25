@@ -383,6 +383,28 @@ else
 
     -- Command-line abbreviation: typing lowercase :codediff expands to :CodeDiff
     vim.cmd([[cnoreabbrev <expr> codediff (getcmdtype() == ':' && getcmdline() =~ '^codediff') ? 'CodeDiff' : 'codediff']])
+
+    -- Toggle and resync scrollbind across diff windows
+    local function toggle_scrollbind()
+      local cur = vim.wo.scrollbind
+      local new_val = not cur
+      for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+        local buf = vim.api.nvim_win_get_buf(win)
+        local ft = vim.bo[buf].filetype
+        if ft ~= "codediff-explorer" and ft ~= "NvimTree" then
+          vim.wo[win].scrollbind = new_val
+        end
+      end
+      if new_val then
+        vim.cmd("syncbind")
+        vim.notify("Diff scroll locked (scrollbind ON)", vim.log.levels.INFO, { title = "ScrollBind" })
+      else
+        vim.notify("Diff scroll unlocked (scrollbind OFF)", vim.log.levels.INFO, { title = "ScrollBind" })
+      end
+    end
+
+    vim.api.nvim_create_user_command("ToggleScrollBind", toggle_scrollbind, { desc = "Toggle synchronized scrolling across diff panes" })
+    map("n", "<leader>sb", toggle_scrollbind, { desc = "Toggle synchronized scrolling (lock/unlock)" })
 end
 
 return {
