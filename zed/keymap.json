@@ -1,0 +1,117 @@
+[
+  {
+    "context": "Workspace",
+    "bindings": {
+      "ctrl-h": ["workspace::ActivatePaneInDirection", "Left"],
+      "ctrl-l": ["workspace::ActivatePaneInDirection", "Right"],
+      "ctrl-k": ["workspace::ActivatePaneInDirection", "Up"],
+      "ctrl-j": ["workspace::ActivatePaneInDirection", "Down"]
+    }
+  },
+  {
+    "context": "VimControl && !menu",
+    "bindings": {
+      "space": null
+    }
+  },
+  {
+    "context": "ProjectPanel && not_editing",
+    "bindings": {
+      "j": "menu::SelectNext",
+      "k": "menu::SelectPrev",
+      "h": "project_panel::CollapseSelectedEntry",
+      "l": "project_panel::ExpandSelectedEntry",
+      "o": "project_panel::Open",
+      "enter": "project_panel::Open",
+      "q": "project_panel::ToggleFocus",
+      "space q": "project_panel::ToggleFocus",
+      "space e": "project_panel::ToggleFocus",
+      "ctrl-h": "workspace::FocusCenterPane",
+      "ctrl-l": "workspace::FocusCenterPane"
+    }
+  },
+  {
+    "context": "Editor && (vim_mode == normal || vim_mode == visual)",
+    "bindings": {
+      "ctrl-l": "project_panel::ToggleFocus",
+      "space n h": "editor::Cancel",
+      "space e": "project_panel::ToggleFocus",
+      "space f f": "file_finder::Toggle",
+      "space f s": "pane::DeploySearch",
+      "space v": "pane::SplitRight",
+      "space -": "pane::SplitDown",
+      "space c": "workspace::NewFile",
+      "space q": "pane::CloseActiveItem",
+      "space b n": "pane::ActivateNextItem",
+      "space b p": "pane::ActivatePrevItem",
+      "space t t": "workspace::NewFile",
+      "space t c": "pane::CloseActiveItem",
+      "space t o": "pane::CloseInactiveItems",
+      "space t n": "pane::ActivateNextItem",
+      "space t p": "pane::ActivatePrevItem",
+      "g d": "editor::GoToDefinition",
+      "g D": "editor::GoToDefinitionSplit",
+      "g r": "editor::FindAllReferences",
+      "g i": "editor::GoToImplementation",
+      "g I": "editor::GoToImplementationSplit",
+      "g y": "editor::GoToTypeDefinition",
+      "K": "editor::Hover",
+      "space r n": "editor::Rename",
+      "space c a": "editor::ToggleCodeActions",
+      "g l": "editor::Hover",
+      "] d": "editor::GoToDiagnostic",
+      "[ d": "editor::GoToPreviousDiagnostic",
+      "] e": ["editor::GoToDiagnostic", { "severity": "error" }],
+      "[ e": ["editor::GoToPreviousDiagnostic", { "severity": "error" }],
+      "] w": ["editor::GoToDiagnostic", { "severity": "warning" }],
+      "[ w": ["editor::GoToPreviousDiagnostic", { "severity": "warning" }],
+      "space x x": "diagnostics::Deploy",
+      "s s": "outline::Toggle",
+      "s S": "project_symbols::Toggle",
+      "space l r": "editor::RestartLanguageServer",
+      "space g g": ["task::Spawn", { "task_name": "Lazygit", "reveal_target": "center" }],
+      "space d t": ["task::Spawn", { "task_name": "dotnet test" }],
+      "space d r": ["task::Spawn", { "task_name": "dotnet run" }],
+      "space d w": ["task::Spawn", { "task_name": "dotnet watch" }],
+      "space t f": "editor::Format",
+      "space c f": "editor::Format",
+      "space m p": "markdown::OpenPreviewToTheSide",
+      "space a i": "assistant::InlineAssist",
+      "space a c": "assistant::ToggleFocus",
+      "space a": "pane::TogglePinTab",
+      "space h a": "pane::TogglePinTab",
+      "ctrl-e": "tab_switcher::Toggle",
+      "space h h": "tab_switcher::Toggle",
+      "space h m": "tab_switcher::Toggle",
+      "space 1": ["pane::ActivateItem", 0],
+      "space 2": ["pane::ActivateItem", 1],
+      "space 3": ["pane::ActivateItem", 2],
+      "space 4": ["pane::ActivateItem", 3],
+      "space h 1": ["pane::ActivateItem", 0],
+      "space h 2": ["pane::ActivateItem", 1],
+      "space h 3": ["pane::ActivateItem", 2],
+      "space h 4": ["pane::ActivateItem", 3],
+      "ctrl-1": ["pane::ActivateItem", 0],
+      "ctrl-2": ["pane::ActivateItem", 1],
+      "ctrl-3": ["pane::ActivateItem", 2],
+      "ctrl-4": ["pane::ActivateItem", 3],
+      "space h n": "pane::ActivateNextItem",
+      "space h p": "pane::ActivatePrevItem",
+      "] h": "pane::ActivateNextItem",
+      "[ h": "pane::ActivatePrevItem"
+    }
+  },
+  {
+    "context": "Editor",
+    "bindings": {
+      "ctrl-s": "workspace::Save"
+    }
+  },
+  {
+    "context": "Editor && vim_mode == insert",
+    "bindings": {
+      "ctrl-h": "editor::DeleteToPreviousWordStart",
+      "ctrl-backspace": "editor::DeleteToPreviousWordStart"
+    }
+  }
+]

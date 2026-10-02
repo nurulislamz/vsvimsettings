@@ -1,0 +1,35 @@
+[
+  {
+    "label": "Lazygit",
+    "command": "lazygit",
+    "args": [],
+    "env": {},
+    "use_new_terminal": true,
+    "allow_concurrent_runs": false,
+    "reveal_target": "center"
+  },
+  {
+    "label": "dotnet test",
+    "command": "dotnet",
+    "args": ["test"],
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal_target": "dock"
+  },
+  {
+    "label": "dotnet run",
+    "command": "dotnet",
+    "args": ["run"],
+    "use_new_terminal": true,
+    "allow_concurrent_runs": false,
+    "reveal_target": "dock"
+  },
+  {
+    "label": "dotnet watch",
+    "command": "dotnet",
+    "args": ["watch", "run"],
+    "use_new_terminal": true,
+    "allow_concurrent_runs": false,
+    "reveal_target": "dock"
+  }
+]
