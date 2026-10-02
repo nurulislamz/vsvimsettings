@@ -100,16 +100,57 @@ return {
       })
     end 
   },
-  { "folke/tokyonight.nvim", cond = not vim.g.vscode, lazy = false, priority = 1000, config = function() vim.cmd([[colorscheme tokyonight]]) end },
+  {
+    "scottmckendry/cyberdream.nvim",
+    cond = not vim.g.vscode,
+    lazy = false,
+    priority = 1000,
+    config = function()
+      require("cyberdream").setup({
+        transparent = true,
+        italic_comments = true,
+        hide_fillchars = true,
+        borderless_pickers = true,
+        terminal_colors = true,
+      })
+      vim.cmd("colorscheme cyberdream")
+    end,
+  },
   { 
     "folke/which-key.nvim", 
     lazy = false,
     priority = 900,
     init = function() 
-      vim.o.timeout = true; 
+      vim.o.timeout = true 
       vim.o.timeoutlen = 500 
     end, 
-    opts = {} 
+    opts = {
+      preset = "helix",
+      icons = { rules = false },
+      spec = {
+        mode = { "n", "v" },
+        { "<leader><Tab>", group = "tabs" },
+        { "<leader>b", group = "buffer" },
+        { "<leader>c", group = "code / chat" },
+        { "<leader>f", group = "file/find" },
+        { "<leader>g", group = "git" },
+        { "<leader>h", group = "harpoon" },
+        { "<leader>m", group = "markdown" },
+        { "<leader>s", group = "scroll / diff" },
+        { "<leader>S", group = "session" },
+        { "<leader>t", group = "toggle" },
+        { "<leader>w", group = "window" },
+        { "<leader>x", group = "trouble" },
+        { "<leader>1", hidden = true },
+        { "<leader>2", hidden = true },
+        { "<leader>3", hidden = true },
+        { "<leader>4", hidden = true },
+        { "<leader>p", desc = "Search paste buffer" },
+        { "<leader>e", desc = "File explorer (nvim-tree)" },
+        { "<leader>u", desc = "Undotree" },
+        { "<leader>.", desc = "Scratch buffer" },
+      },
+    },
   },
   {
     "RRethy/vim-illuminate",
@@ -126,18 +167,13 @@ return {
   },
   {
     "rcarriga/nvim-notify",
-    cond = not vim.g.vscode,
-    opts = {
-      timeout = 2000, -- 2 seconds instead of 5
-      render = "compact", -- use a more compact style
-      stages = "static", -- disable complex animations to keep it snappy
-    },
+    enabled = false,
   },
   {
     "folke/noice.nvim",
     cond = not vim.g.vscode,
     event = "VeryLazy",
-    dependencies = { "MunifTanjim/nui.nvim", "rcarriga/nvim-notify" },
+    dependencies = { "MunifTanjim/nui.nvim" },
     config = function()
       require("noice").setup({
         lsp = { 

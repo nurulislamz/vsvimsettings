@@ -135,11 +135,6 @@ return {
                         config.settings.python.pythonPath = python_path
                     end
                 end,
-                on_init = function(client)
-                    if client.config.settings and client.config.settings.python then
-                        client.notify("workspace/didChangeConfiguration", { settings = client.config.settings })
-                    end
-                end,
                 on_new_config = function(new_config, root_dir)
                     local python_path = find_project_python(root_dir)
                     new_config.settings = new_config.settings or {}
@@ -304,7 +299,7 @@ return {
                     },
                 },
                 underline = true,
-                update_in_insert = false,
+                update_in_insert = true,
                 severity_sort = true,
                 float = {
                     focused = false,

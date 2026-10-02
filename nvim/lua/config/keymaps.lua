@@ -13,6 +13,7 @@ map("n", "p", '"+p', { desc = "Paste clipboard after cursor" })
 map("n", "P", '"+P', { desc = "Paste clipboard before cursor" })
 map("x", "p", '"_d"+P', { desc = "Paste clipboard over selection (keep clipboard)" })
 map("x", "P", '"_d"+P', { desc = "Paste clipboard over selection (keep clipboard)" })
+map("v", "<C-c>", '"+y', { desc = "Copy selection to clipboard" })
 
 -- ==========================================
 -- Smart Delete: route to clipboard or black hole
@@ -134,12 +135,64 @@ else
     -- Space-p: Search through paste buffer (registers & clipboard history)
     map("n", "<leader>p", search_paste_buffer, { desc = "Search paste buffer" })
 
-    -- Tab Management
-    map("n", "<leader>tt", ":tabnew<CR>", { desc = "New tab" })
-    map("n", "<leader>tc", ":tabclose<CR>", { desc = "Close current tab" })
-    map("n", "<leader>to", ":tabonly<CR>", { desc = "Close all other tabs" })
-    map("n", "<leader>tn", ":tabnext<CR>", { desc = "Next tab" })
-    map("n", "<leader>tp", ":tabprevious<CR>", { desc = "Previous tab" })
+    -- Tabs (Scott McKendry convention)
+    map("n", "<leader><tab><tab>", ":tabnew<cr>", { desc = "New Tab" })
+    map("n", "<leader><tab>d", ":tabclose<cr>", { desc = "Close Tab" })
+    map("n", "<leader><tab>l", ":tabnext<cr>", { desc = "Next Tab" })
+    map("n", "<leader><tab>h", ":tabprevious<cr>", { desc = "Previous Tab" })
+
+    -- Toggles (via Snacks)
+    local snacks = require("snacks")
+
+    snacks.toggle({
+      name = "Autoformat",
+      get = function() return not vim.g.disable_autoformat end,
+      set = function(state) vim.g.disable_autoformat = not state end,
+    }):map("<leader>ta")
+
+    -- Cursor Autocomplete toggle (replaces Copilot toggle with Cursor sidecar)
+    snacks.toggle({
+      name = "Cursor Autocomplete",
+      get = function() return vim.g.ai_completion ~= "off" and vim.g.ai_neocursor end,
+      set = function(state)
+        if state then
+          vim.g.ai_completion = "neocursor"
+          vim.g.ai_neocursor = not vim.g.vscode
+          vim.notify("Cursor Autocomplete enabled", vim.log.levels.INFO, { title = "AI" })
+        else
+          vim.g.ai_completion = "off"
+          vim.g.ai_neocursor = false
+          pcall(function() require("neocursor").dismiss() end)
+          vim.notify("Cursor Autocomplete disabled", vim.log.levels.INFO, { title = "AI" })
+        end
+      end,
+    }):map("<leader>tc")
+
+    snacks.toggle.diagnostics():map("<leader>td")
+    snacks.toggle.line_number():map("<leader>tl")
+    snacks.toggle.option("relativenumber", { name = "Relative Number" }):map("<leader>tL")
+    snacks.toggle.option("wrap", { name = "Wrap" }):map("<leader>tw")
+    snacks.toggle.option("spell", { name = "Spelling" }):map("<leader>ts")
+    snacks.toggle.inlay_hints():map("<leader>th")
+    snacks.toggle.treesitter():map("<leader>tT")
+    snacks.toggle.option("conceallevel", { off = 0, on = 2 }):map("<leader>tC")
+
+    -- Snacks Pickers
+    map("n", "<leader><leader>", function() snacks.picker.smart() end, { desc = "Smart Fuzzy Find" })
+    map("n", "<leader>ff", function() snacks.picker.files({ hidden = true }) end, { desc = "Fuzzy find files" })
+    map("n", "<leader>fr", function() snacks.picker.recent() end, { desc = "Fuzzy find recent files" })
+    map("n", "<leader>fs", function() snacks.picker.grep() end, { desc = "Find string in CWD" })
+    map("n", "<leader>fc", function() snacks.picker.grep_word() end, { desc = "Find word under cursor" })
+    map("n", "<leader>fb", function() snacks.picker.buffers({ layout = { preset = "select" } }) end, { desc = "Fuzzy find buffers" })
+    map("n", "<leader>fh", function() snacks.picker.help() end, { desc = "Find help tags" })
+
+    -- Snacks Ergonomics & Tools
+    map("n", "<leader>bd", function() snacks.bufdelete() end, { desc = "Delete buffer (layout safe)" })
+    map("n", "<leader>wz", function() snacks.zen() end, { desc = "Zen mode" })
+    map("n", "<leader>.", function() snacks.scratch() end, { desc = "Toggle Scratch Buffer" })
+    map("n", "<leader>gb", function() snacks.gitbrowse() end, { desc = "Git Browse" })
+    map("n", "<leader>gg", function() snacks.lazygit() end, { desc = "Lazygit" })
+    map({ "n", "t" }, "<C-\\>", function() snacks.terminal() end, { desc = "Toggle Terminal" })
 
     map({ "i", "x", "n", "s" }, "<C-s>", "<cmd>w<cr><esc>", { desc = "Save file" })
 

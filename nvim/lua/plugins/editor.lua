@@ -4,11 +4,7 @@ return {
     lazy = false,
     cond = not vim.g.vscode,
     branch = "0.1.x", 
-    dependencies = { "nvim-lua/plenary.nvim" }, 
-    keys = { 
-      { "<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Find Files" }, 
-      { "<leader>fs", "<cmd>Telescope live_grep<cr>", desc = "Find String" } 
-    },
+    dependencies = { "nvim-lua/plenary.nvim" },
     config = function()
       local telescope = require("telescope")
       local actions = require("telescope.actions")
