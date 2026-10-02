@@ -81,6 +81,8 @@ if vim.g.vscode then
 
     -- Window/Buffer Management (VS Code equivalent)
     map("n", "<leader>v", function() vscode.action("workbench.action.splitEditor") end, { desc = "Split window vertically" })
+    map("n", "<leader>_", function() vscode.action("workbench.action.splitEditor") end, { desc = "Split window vertically (tmux)" })
+    map("n", "<leader>|", function() vscode.action("workbench.action.splitEditor") end, { desc = "Split window vertically" })
     map("n", "<leader>-", function() vscode.action("workbench.action.splitEditorOrthogonal") end, { desc = "Split window horizontally" })
     map("n", "<leader>c", function() vscode.action("workbench.action.files.newUntitledFile") end, { desc = "Create new buffer" })
     map("n", "<leader>q", function() vscode.action("workbench.action.closeActiveEditor") end, { desc = "Close current buffer" })
@@ -111,6 +113,8 @@ else
 
     -- Custom Unified Window/Buffer Management (Tmux Synergy)
     map("n", "<leader>v", "<C-w>v", { desc = "Split window vertically" })
+    map("n", "<leader>_", "<C-w>v", { desc = "Split window vertically (tmux)" })
+    map("n", "<leader>|", "<C-w>v", { desc = "Split window vertically" })
     map("n", "<leader>-", "<C-w>s", { desc = "Split window horizontally" })
     map("n", "<leader>c", ":enew<CR>", { desc = "Create new buffer" })
     map("n", "<leader>q", function()
@@ -335,23 +339,41 @@ else
     map("n", "<leader>ca", vim.lsp.buf.code_action, { desc = "Code Action" })
     map("n", "gl", vim.diagnostic.open_float, { desc = "Show Line Diagnostics" })
 
-    -- Recover pyright after edits made outside nvim (agents, git, etc.):
-    -- reload on-disk changes into buffers, and restart a stale server on demand.
+    -- Hidden buffers can be LSP dependencies; refresh them while idle too.
+    local function check_buffer_time(buf)
+      if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].buftype == "" then
+        vim.cmd("checktime " .. buf)
+      end
+    end
+
     vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHoldI" }, {
-      callback = function()
-        if vim.fn.mode() ~= "c" then
-          vim.cmd("checktime")
-        end
+      callback = function(event)
+        if vim.fn.mode() == "c" then return end
+        vim.schedule(function()
+          if event.event == "FocusGained" or event.event == "CursorHold" or event.event == "CursorHoldI" then
+            for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+              check_buffer_time(buf)
+            end
+          else
+            check_buffer_time(event.buf)
+          end
+        end)
       end,
     })
 
-    -- After a buffer is reloaded from disk, nudge pyright to re-resolve its
-    -- cross-file type cache (fixes stale "parameter not found" on imports).
+    -- Coalesce Pyright refreshes when several external edits reload together.
+    local reload_seq = 0
     vim.api.nvim_create_autocmd("FileChangedShellPost", {
-      callback = function()
-        for _, client in ipairs(vim.lsp.get_clients({ name = "pyright" })) do
-          client:notify("workspace/didChangeConfiguration", { settings = client.config.settings })
-        end
+      callback = function(event)
+        if vim.bo[event.buf].filetype ~= "python" then return end
+        reload_seq = reload_seq + 1
+        local seq = reload_seq
+        vim.defer_fn(function()
+          if seq ~= reload_seq then return end
+          for _, client in ipairs(vim.lsp.get_clients({ name = "pyright" })) do
+            client:notify("workspace/didChangeConfiguration", { settings = client.config.settings })
+          end
+        end, 150)
       end,
     })
     map("n", "<leader>lr", "<cmd>LspRestart<CR>", { desc = "Restart LSP server" })
