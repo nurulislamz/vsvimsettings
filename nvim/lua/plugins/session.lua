@@ -6,36 +6,6 @@ return {
       need = 1,
       branch = true,
     },
-    keys = {
-      {
-        "<leader>Ss",
-        function()
-          require("persistence").load()
-        end,
-        desc = "Restore Session (cwd)",
-      },
-      {
-        "<leader>Sl",
-        function()
-          require("persistence").load({ last = true })
-        end,
-        desc = "Restore Last Session",
-      },
-      {
-        "<leader>SS",
-        function()
-          require("persistence").select()
-        end,
-        desc = "Select Session",
-      },
-      {
-        "<leader>Sd",
-        function()
-          require("persistence").stop()
-        end,
-        desc = "Don't Save Session on Exit",
-      },
-    },
     init = function()
       -- Reopen the last workspace for this cwd when starting Neovim without args
       vim.api.nvim_create_autocmd("VimEnter", {
@@ -50,13 +20,17 @@ return {
           end)
         end,
       })
-      -- Close NvimTree before saving sessions so zombie tree buffers aren't restored
+      -- Close explorer before saving sessions so zombie buffers aren't restored
       vim.api.nvim_create_autocmd("User", {
         pattern = "PersistenceSavePre",
         callback = function()
           pcall(function()
-            if require("nvim-tree.api").tree.is_visible() then
-              require("nvim-tree.api").tree.close()
+            local snacks = package.loaded["snacks"]
+            if snacks and snacks.picker then
+              local explorer = snacks.picker.get({ source = "explorer" })[1]
+              if explorer then
+                explorer:close()
+              end
             end
           end)
         end,

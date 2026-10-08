@@ -19,7 +19,6 @@ return {
       "nvim-lua/plenary.nvim",
       "mfussenegger/nvim-dap",
       "nvim-telescope/telescope.nvim",
-      { "ms-jpq/coq_nvim", branch = "coq" },
     },
     config = function()
       local dotnet = require("easy-dotnet")
@@ -54,10 +53,14 @@ return {
               map("gi", function() require("telescope.builtin").lsp_implementations({ reuse_win = true }) end, "Go to Implementation")
               map("gy", function() require("telescope.builtin").lsp_type_definitions({ reuse_win = true }) end, "Go to Type Definition")
               map("K", vim.lsp.buf.hover, "Hover Doc")
-              map("<leader>ca", vim.lsp.buf.code_action, "Code Action")
-              map("<leader>rn", vim.lsp.buf.rename, "Rename Symbol")
+              vim.keymap.set({ "n", "x" }, "ga", vim.lsp.buf.code_action, { buffer = bufnr, desc = "LSP: Code Action" })
+              vim.keymap.set("n", "<leader>rn", require("config.keymaps").rename_symbol, {
+                buffer = bufnr,
+                desc = "LSP: Rename Symbol",
+                expr = true,
+              })
             end,
-            capabilities = vim.lsp.protocol.make_client_capabilities(),
+            capabilities = require("cmp_nvim_lsp").default_capabilities(),
           },
         },
         debugger = {

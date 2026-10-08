@@ -1,6 +1,10 @@
 local map = vim.keymap.set
 local smart_goto_definition = nil
 
+local function rename_symbol()
+  return ":IncRename " .. vim.fn.expand("<cword>")
+end
+
 -- Clear search highlights with Esc or <leader>nh
 map("n", "<Esc>", "<cmd>nohlsearch<CR>", { desc = "Clear search highlights" })
 map("n", "<leader>nh", "<cmd>nohlsearch<CR>", { desc = "Clear search highlights" })
@@ -76,33 +80,37 @@ end
 
 do
     map("n", "<leader>e", function()
-      local api = require("nvim-tree.api")
-      if vim.bo.filetype == "NvimTree" then
-        api.tree.close()
+      local snacks = require("snacks")
+      local explorer = snacks.picker.get({ source = "explorer" })[1]
+      if explorer then
+        explorer:close()
       else
-        api.tree.find_file({ open = true, focus = true })
+        snacks.explorer()
       end
-    end, { desc = "Toggle / Focus File Explorer at Current File" })
+    end, { desc = "Toggle File Explorer (Snacks)" })
+
+    map("n", "-", "<cmd>Oil<cr>", { desc = "Open parent directory (Oil)" })
 
     -- Custom Unified Window/Buffer Management (Tmux Synergy)
     map("n", "<leader>v", "<C-w>v", { desc = "Split window vertically" })
     map("n", "<leader>_", "<C-w>v", { desc = "Split window vertically (tmux)" })
     map("n", "<leader>|", "<C-w>v", { desc = "Split window vertically" })
     map("n", "<leader>-", "<C-w>s", { desc = "Split window horizontally" })
-    map("n", "<leader>c", ":enew<CR>", { desc = "Create new buffer" })
-    map("n", "<leader>q", function()
+    local function close_current_buffer()
       if vim.bo.buftype == "quickfix" then
         vim.cmd("cclose")
       elseif vim.bo.filetype == "trouble" then
         vim.cmd("Trouble close")
-      elseif vim.bo.filetype == "NvimTree" then
-        require("nvim-tree.api").tree.close()
+      elseif vim.bo.filetype == "oil" then
+        require("oil").close()
+      elseif vim.bo.buftype == "terminal" then
+        vim.cmd("bd!")
       else
-        vim.cmd("bd")
+        require("snacks").bufdelete()
       end
-    end, { desc = "Close current buffer or submenu" })
-    map("n", "<leader>bn", ":bnext<CR>", { desc = "Next buffer" })
-    map("n", "<leader>bp", ":bprev<CR>", { desc = "Previous buffer" })
+    end
+    map("n", "<leader>q", close_current_buffer, { desc = "Close current buffer or submenu" })
+    map("n", "<leader>Q", close_current_buffer, { desc = "Close current buffer or submenu" })
 
     -- Space-p: Search through paste buffer (registers & clipboard history)
     map("n", "<leader>p", search_paste_buffer, { desc = "Search paste buffer" })
@@ -112,15 +120,22 @@ do
     map("n", "<leader><tab>d", ":tabclose<cr>", { desc = "Close Tab" })
     map("n", "<leader><tab>l", ":tabnext<cr>", { desc = "Next Tab" })
     map("n", "<leader><tab>h", ":tabprevious<cr>", { desc = "Previous Tab" })
+    map("n", "<leader>d", function()
+      if vim.fn.tabpagenr("$") > 1 then
+        pcall(vim.cmd, "tabnext #")
+      else
+        pcall(vim.cmd, "b#")
+      end
+    end, { desc = "Toggle last two tabs/buffers" })
 
     -- Toggles (via Snacks)
     local snacks = require("snacks")
 
     snacks.toggle({
-      name = "Autoformat",
+      name = "Autoformat (on save)",
       get = function() return not vim.g.disable_autoformat end,
       set = function(state) vim.g.disable_autoformat = not state end,
-    }):map("<leader>ta")
+    }):map("<leader>ts")
 
     -- Cursor Autocomplete toggle (replaces Copilot toggle with Cursor sidecar)
     snacks.toggle({
@@ -144,26 +159,50 @@ do
     snacks.toggle.line_number():map("<leader>tl")
     snacks.toggle.option("relativenumber", { name = "Relative Number" }):map("<leader>tL")
     snacks.toggle.option("wrap", { name = "Wrap" }):map("<leader>tw")
-    snacks.toggle.option("spell", { name = "Spelling" }):map("<leader>ts")
+    snacks.toggle.option("spell", { name = "Spelling" }):map("<leader>tS")
     snacks.toggle.inlay_hints():map("<leader>th")
     snacks.toggle.treesitter():map("<leader>tT")
     snacks.toggle.option("conceallevel", { off = 0, on = 2 }):map("<leader>tC")
 
+    -- Toggle Menu (<leader>tm)
+    map("n", "<leader>tm", function()
+      local items = {}
+      for _, t in pairs(snacks.toggle.toggles) do
+        local state = t:get()
+        table.insert(items, {
+          text = string.format("%s %-5s %s", state and " " or " ", state and "[ON]" or "[OFF]", t.opts.name),
+          toggle = t,
+        })
+      end
+      table.sort(items, function(a, b) return a.toggle.opts.name < b.toggle.opts.name end)
+      snacks.picker({
+        title = "Toggle Menu",
+        layout = "select",
+        items = items,
+        confirm = function(picker, item)
+          picker:close()
+          if item and item.toggle then
+            item.toggle:toggle()
+          end
+        end,
+      })
+    end, { desc = "Toggle Menu (All States)" })
+
     -- Snacks Pickers
-    map("n", "<leader><leader>", function() snacks.picker.smart() end, { desc = "Smart Fuzzy Find" })
-    map("n", "<leader>ff", function() snacks.picker.files({ hidden = true }) end, { desc = "Fuzzy find files" })
+    map("n", "<leader>ff", function() snacks.picker.smart({ hidden = true }) end, { desc = "Smart find files (all)" })
     map("n", "<leader>fr", function() snacks.picker.recent() end, { desc = "Fuzzy find recent files" })
     map("n", "<leader>fs", function() snacks.picker.grep() end, { desc = "Find string in CWD" })
     map("n", "<leader>fc", function() snacks.picker.grep_word() end, { desc = "Find word under cursor" })
-    map("n", "<leader>fb", function() snacks.picker.buffers({ layout = { preset = "select" } }) end, { desc = "Fuzzy find buffers" })
     map("n", "<leader>fh", function() snacks.picker.help() end, { desc = "Find help tags" })
 
     -- Snacks Ergonomics & Tools
-    map("n", "<leader>bd", function() snacks.bufdelete() end, { desc = "Delete buffer (layout safe)" })
-    map("n", "<leader>wz", function() snacks.zen() end, { desc = "Zen mode" })
+    map("n", "<leader>z", function() snacks.zen() end, { desc = "Zen mode" })
     map("n", "<leader>.", function() snacks.scratch() end, { desc = "Toggle Scratch Buffer" })
-    map("n", "<leader>gb", function() snacks.gitbrowse() end, { desc = "Git Browse" })
-    map("n", "<leader>gg", function() snacks.lazygit() end, { desc = "Lazygit" })
+    map("n", "<leader>cb", function() snacks.gitbrowse() end, { desc = "Git Browse" })
+    map("n", "<leader>cg", function() snacks.lazygit() end, { desc = "Lazygit" })
+    map("n", "<leader>cs", function() snacks.picker.git_status() end, { desc = "Git Status (changed files)" })
+    map("n", "<leader>cD", function() snacks.picker.git_diff() end, { desc = "Git Diff" })
+    map("n", "<leader>cq", "<cmd>Gitsigns setqflist target=all<cr>", { desc = "Git diff to quickfix / Trouble" })
     map({ "n", "t" }, "<C-\\>", function() snacks.terminal() end, { desc = "Toggle Terminal" })
 
     map({ "i", "x", "n", "s" }, "<C-s>", "<cmd>w<cr><esc>", { desc = "Save file" })
@@ -173,6 +212,21 @@ do
     map("i", "<C-BS>", "<C-w>", { desc = "Delete previous word" })
 
     map("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
+    -- Navigate between splits from terminal mode.
+    map("t", "<C-h>", "<C-\\><C-n><C-w>h", { desc = "Move to left window" })
+    map("t", "<C-j>", "<C-\\><C-n><C-w>j", { desc = "Move to lower window" })
+    map("t", "<C-k>", "<C-\\><C-n><C-w>k", { desc = "Move to upper window" })
+    map("t", "<C-l>", "<C-\\><C-n><C-w>l", { desc = "Move to right window" })
+    local function scroll_terminal_line(direction)
+      local motion = direction == "down" and "<C-e>" or "<C-y>"
+      local keys = "<C-\\><C-n>" .. motion
+      vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(keys, true, false, true), "n", false)
+    end
+    -- Some terminals deliver Alt as a separate Escape followed by the key.
+    map("t", "<M-j>", function() scroll_terminal_line("down") end, { desc = "Scroll terminal down 1 line" })
+    map("t", "<M-k>", function() scroll_terminal_line("up") end, { desc = "Scroll terminal up 1 line" })
+    map("t", "<Esc>j", function() scroll_terminal_line("down") end, { desc = "Scroll terminal down 1 line" })
+    map("t", "<Esc>k", function() scroll_terminal_line("up") end, { desc = "Scroll terminal up 1 line" })
 
     -- ==========================================
     -- LSP Navigation (Definitions, References, etc.)
@@ -360,8 +414,8 @@ do
     map("n", "<leader>gd", function() require("telescope.builtin").lsp_definitions({ reuse_win = true }) end, { desc = "Telescope Definitions" })
 
     map("n", "K", vim.lsp.buf.hover, { desc = "Hover Documentation" })
-    map("n", "<leader>rn", vim.lsp.buf.rename, { desc = "Rename Symbol" })
-    map("n", "<leader>ca", vim.lsp.buf.code_action, { desc = "Code Action" })
+    map("n", "<leader>rn", rename_symbol, { expr = true, desc = "Rename Symbol" })
+    map({ "n", "x" }, "ga", vim.lsp.buf.code_action, { desc = "Code Action" })
     map("n", "gl", vim.diagnostic.open_float, { desc = "Show Line Diagnostics" })
 
     -- Hidden buffers can be LSP dependencies; refresh them while idle too.
@@ -403,13 +457,6 @@ do
     })
     map("n", "<leader>lr", "<cmd>LspRestart<CR>", { desc = "Restart LSP server" })
 
-    -- Open file under cursor in new tab
-    map("n", "<S-CR>", function()
-      local cfile = vim.fn.expand("<cfile>")
-      if cfile and cfile ~= "" then
-        pcall(vim.cmd, "tabedit " .. vim.fn.fnameescape(cfile))
-      end
-    end, { desc = "Open file under cursor in new tab" })
 
     -- ==========================================
     -- Hot Reload & Instant Restart
@@ -438,7 +485,7 @@ do
       for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
         local buf = vim.api.nvim_win_get_buf(win)
         local ft = vim.bo[buf].filetype
-        if ft ~= "codediff-explorer" and ft ~= "NvimTree" then
+        if ft ~= "codediff-explorer" and ft ~= "oil" and not ft:find("^snacks_") then
           vim.wo[win].scrollbind = new_val
         end
       end
@@ -456,4 +503,5 @@ end
 
 return {
   smart_goto_definition = smart_goto_definition,
+  rename_symbol = rename_symbol,
 }

@@ -41,7 +41,13 @@ return {
         cs = { "csharpier" },
         go = { "gofumpt", "goimports" },
         c = { "clang-format" },
-        cpp = { "clang-format" }
+        cpp = { "clang-format" },
+        javascript = { "prettier" },
+        javascriptreact = { "prettier" },
+        typescript = { "prettier" },
+        typescriptreact = { "prettier" },
+        json = { "prettier" },
+        jsonc = { "prettier" }
       },
       format_on_save = function(bufnr)
         if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then

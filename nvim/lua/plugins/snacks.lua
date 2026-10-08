@@ -29,6 +29,9 @@ return {
       prompt = "   ",
       formatters = { file = { filename_first = true } },
     },
+    explorer = {
+      replace_netrw = false,
+    },
     lazygit = {
       configure = false,
       win = { position = "float", width = 0.99, height = 0.99 },
@@ -45,7 +48,7 @@ return {
         max_width = 80,
       },
     },
-    words = { enabled = true },
+    words = { enabled = true, debounce = 100 },
     scratch = { enabled = true },
     zen = { enabled = true },
   },

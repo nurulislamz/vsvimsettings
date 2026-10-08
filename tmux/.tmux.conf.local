@@ -454,18 +454,24 @@ bind -n C-BSpace send-keys M-BSpace #!important
 bind -n PageUp if-shell -F '#{alternate_on}' 'send-keys PageUp' 'copy-mode -eu' #!important
 bind -n PageDown if-shell -F '#{pane_in_mode}' 'send-keys -X page-down' 'send-keys PageDown' #!important
 
-# Alt+k (up) / Alt+j (down) quarter-page scroll tmux history without prefix/copy-mode ritual.
+# Alt+k (up) / Alt+j (down) 2-line scroll tmux history without prefix/copy-mode ritual.
+# Alt+K (up) / Alt+J (down) 8-line fast scroll.
 # Pass through when the pane is in an alternate-screen app (vim, less, etc.).
 # -e exits copy mode once you page back to the live bottom.
-bind -n M-k if-shell -F '#{alternate_on}' 'send-keys M-k' 'copy-mode -e ; send-keys -N "#{?#{e|<:#{pane_height},4},1,#{e|/:#{pane_height},4}}" -X scroll-up' #!important
-bind -n M-j if-shell -F '#{alternate_on}' 'send-keys M-j' \
-  "if-shell -F '#{pane_in_mode}' 'send-keys -N \"#{?#{e|<:#{pane_height},4},1,#{e|/:#{pane_height},4}}\" -X scroll-down'" #!important
+bind -n M-k if-shell -F '#{alternate_on}' 'send-keys M-k' 'copy-mode -e ; send-keys -N 2 -X scroll-up' #!important
+bind -n M-j if-shell -F '#{alternate_on}' 'send-keys M-j' 'if-shell -F "#{pane_in_mode}" "send-keys -N 2 -X scroll-down"' #!important
+bind -n M-K if-shell -F '#{alternate_on}' 'send-keys M-K' 'copy-mode -e ; send-keys -N 8 -X scroll-up' #!important
+bind -n M-J if-shell -F '#{alternate_on}' 'send-keys M-J' 'if-shell -F "#{pane_in_mode}" "send-keys -N 8 -X scroll-down"' #!important
 
-# Ensure both vi and emacs copy-mode key tables support Alt+k / Alt+j and Ctrl+u / Ctrl+d
-bind -T copy-mode-vi M-k send-keys -N '#{?#{e|<:#{pane_height},4},1,#{e|/:#{pane_height},4}}' -X scroll-up #!important
-bind -T copy-mode-vi M-j send-keys -N '#{?#{e|<:#{pane_height},4},1,#{e|/:#{pane_height},4}}' -X scroll-down #!important
-bind -T copy-mode M-k send-keys -N '#{?#{e|<:#{pane_height},4},1,#{e|/:#{pane_height},4}}' -X scroll-up #!important
-bind -T copy-mode M-j send-keys -N '#{?#{e|<:#{pane_height},4},1,#{e|/:#{pane_height},4}}' -X scroll-down #!important
+# Ensure both vi and emacs copy-mode key tables support Alt+k/j (2 lines) and Alt+Shift+K/J (8 lines)
+bind -T copy-mode-vi M-k send-keys -N 2 -X scroll-up #!important
+bind -T copy-mode-vi M-j send-keys -N 2 -X scroll-down #!important
+bind -T copy-mode-vi M-K send-keys -N 8 -X scroll-up #!important
+bind -T copy-mode-vi M-J send-keys -N 8 -X scroll-down #!important
+bind -T copy-mode M-k send-keys -N 2 -X scroll-up #!important
+bind -T copy-mode M-j send-keys -N 2 -X scroll-down #!important
+bind -T copy-mode M-K send-keys -N 8 -X scroll-up #!important
+bind -T copy-mode M-J send-keys -N 8 -X scroll-down #!important
 bind -T copy-mode-vi C-u send-keys -X halfpage-up #!important
 bind -T copy-mode-vi C-d send-keys -X halfpage-down #!important
 bind -T copy-mode C-u send-keys -X halfpage-up #!important
@@ -524,10 +530,19 @@ tmux_conf_uninstall_plugins_on_reload=true
 #set -g @plugin 'tmux-plugins/tmux-cpu'
 set -g @plugin 'tmux-plugins/tmux-resurrect'
 set -g @plugin 'tmux-plugins/tmux-continuum'
+set -g @plugin 'sainnhe/tmux-fzf'
+set -g @plugin 'omerxx/tmux-sessionx'
+set -g @sessionx-bind 'O'
+set -g @sessionx-bind-move-window 'alt-m'
+set -g @sessionx-fzf-builtin-tmux 'on'
+set -g @sessionx-preview-enabled 'false'
 set -g @continuum-restore 'on'
 
-# re-added from previous config (which-key only; catppuccin dropped — conflicts with oh-my-tmux theme)
 set -g @plugin 'alexwforsythe/tmux-which-key'   # prefix + Space -> popup menu
+set -g @plugin 'azorng/tmux-smooth-scroll'
+set -g @smooth-scroll-speed '30'
+set -g @smooth-scroll-normal '1'
+set -g @smooth-scroll-easing 'sine'
 
 # kill pane with no confirmation prompt
 bind x kill-pane
@@ -542,6 +557,10 @@ bind -r '}' swap-window -t +1 \; select-window -t +1
 
 # Press Alt + d to instantly bounce back and forth between your last two windows
 bind-key -n M-d last-window #!important
+
+# Alt + h / l to navigate backwards / forwards between windows
+bind-key -n M-h previous-window #!important
+bind-key -n M-l next-window #!important
 
 
 # -- custom variables ----------------------------------------------------------
@@ -607,6 +626,11 @@ set -as terminal-features 'xterm*:clipboard:passthrough'
 set -as terminal-features 'wezterm:clipboard:passthrough'
 set -ga update-environment TERM
 set -ga update-environment TERM_PROGRAM
+
+# Task logs per tmux session
+set-hook -g after-new-session 'run-shell -b "tmux-tasklog init \"#{session_name}\" \"#{pane_current_path}\""'
+bind-key T display-popup -w 85% -h 85% -E 'tmux-tasklog open "#{session_name}" "#{pane_current_path}"'
+bind-key . display-popup -w 85% -h 85% -E 'tmux-tasklog open "#{session_name}" "#{pane_current_path}"'
 
 # "$@"
 # # /!\ do not remove the previous line
