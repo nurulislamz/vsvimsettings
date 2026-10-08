@@ -14,9 +14,13 @@ return {
   },
   {
     "GustavEikaas/easy-dotnet.nvim",
-    cond = not vim.g.vscode,
     lazy = false,
-    dependencies = { "nvim-lua/plenary.nvim", "mfussenegger/nvim-dap", "nvim-telescope/telescope.nvim" },
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      "mfussenegger/nvim-dap",
+      "nvim-telescope/telescope.nvim",
+      { "ms-jpq/coq_nvim", branch = "coq" },
+    },
     config = function()
       local dotnet = require("easy-dotnet")
       
@@ -53,7 +57,7 @@ return {
               map("<leader>ca", vim.lsp.buf.code_action, "Code Action")
               map("<leader>rn", vim.lsp.buf.rename, "Rename Symbol")
             end,
-            capabilities = require("cmp_nvim_lsp").default_capabilities(),
+            capabilities = vim.lsp.protocol.make_client_capabilities(),
           },
         },
         debugger = {

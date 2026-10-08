@@ -1,5 +1,5 @@
 return {
-  { "tpope/vim-fugitive", cond = not vim.g.vscode },
+  { "tpope/vim-fugitive" },
   { 
     "kdheepak/lazygit.nvim", 
     enabled = false,
@@ -7,7 +7,6 @@ return {
   {
     "esmuellert/codediff.nvim",
     cmd = "CodeDiff",
-    cond = not vim.g.vscode,
     opts = {
       diff = {
         layout = "side-by-side",
@@ -33,10 +32,9 @@ return {
       { "<leader>cd", "<cmd>CodeDiff<cr>", desc = "Open CodeDiff" },
     },
   },
-  { "lewis6991/gitsigns.nvim", cond = not vim.g.vscode, config = true },
+  { "lewis6991/gitsigns.nvim", config = true },
   {
     "stevearc/conform.nvim",
-    cond = not vim.g.vscode,
     opts = {
       formatters_by_ft = {
         lua = { "stylua" },

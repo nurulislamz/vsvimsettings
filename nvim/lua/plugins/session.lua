@@ -1,7 +1,6 @@
 return {
   {
     "folke/persistence.nvim",
-    cond = not vim.g.vscode,
     event = "BufReadPre", -- only start saving once a real file is opened
     opts = {
       need = 1,
@@ -38,7 +37,7 @@ return {
       },
     },
     init = function()
-      -- VS Code-like: reopen last workspace for this cwd when starting nvim with no args
+      -- Reopen the last workspace for this cwd when starting Neovim without args
       vim.api.nvim_create_autocmd("VimEnter", {
         group = vim.api.nvim_create_augroup("persistence_autoload", { clear = true }),
         nested = true,

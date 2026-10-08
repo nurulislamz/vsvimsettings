@@ -2,17 +2,10 @@ return {
     -- 1. LSPCONFIG & AUTOCOMPLETE
     {
         "neovim/nvim-lspconfig",
-        cond = not vim.g.vscode,
         dependencies = {
             "mason-org/mason.nvim",
             "mason-org/mason-lspconfig.nvim",
-            "hrsh7th/nvim-cmp",
-            "hrsh7th/cmp-nvim-lsp",
-            "hrsh7th/cmp-buffer",
-            "hrsh7th/cmp-path",
-            "hrsh7th/cmp-cmdline",
-            "L3MON4D3/LuaSnip",
-            "saadparwaiz1/cmp_luasnip",
+            { "ms-jpq/coq_nvim", branch = "coq" },
         },
         config = function()
             local dotnet_tools = vim.fn.expand("~/.dotnet/tools")
@@ -37,7 +30,7 @@ return {
             })
 
             local lspconfig = require("lspconfig")
-            local capabilities = require("cmp_nvim_lsp").default_capabilities()
+            local capabilities = vim.lsp.protocol.make_client_capabilities()
             -- Neovim hardcodes didChangeWatchedFiles off on Linux (vim/lsp/protocol.lua),
             -- even though the inotify backend is available. Force it on so pyright
             -- sees file changes made outside nvim (agents, git) without a server restart.
@@ -221,68 +214,55 @@ return {
                 lspconfig.omnisharp.setup({ autostart = false })
             end
 
-            -- Autocompletion Setup
-            local cmp = require("cmp")
+            -- COQ handles insert and LSP completion.
 
-            -- AI (neocursor OR copilot) uses inline ghost text + Tab/CR accept.
-            -- nvim-cmp stays for LSP/snippets/buffer/path only.
-            local function accept_ai_or_cmp(fallback)
+            for _, key in ipairs({ "<Esc>", "<C-c>", "<BS>", "<C-w>", "<C-u>", "<C-r>" }) do
+                local lhs = key
+                vim.keymap.set("i", lhs, function()
+                    return (vim.fn.pumvisible() == 1 and "<C-e>" or "") .. lhs
+                end, { expr = true, silent = true })
+            end
+
+            local function accept_ai()
                 if vim.g.ai_neocursor then
                     local ok, neocursor = pcall(require, "neocursor")
                     if ok and neocursor.accept and neocursor.accept() then
-                        return
+                        return true
                     end
                 elseif vim.g.ai_copilot then
                     local ok, suggestion = pcall(require, "copilot.suggestion")
                     if ok and suggestion.is_visible() then
                         suggestion.accept()
-                        return
+                        return true
                     end
                 end
-                if cmp.visible() then
-                    cmp.confirm({ select = true })
-                else
-                    fallback()
-                end
+                return false
             end
 
-            cmp.setup({
-                snippet = { expand = function(args) require("luasnip").lsp_expand(args.body) end },
-                mapping = cmp.mapping.preset.insert({
-                    ["<C-Space>"] = cmp.mapping.complete(),
-                    ["<Tab>"] = cmp.mapping(accept_ai_or_cmp, { "i", "s" }),
-                    ["<CR>"] = cmp.mapping(accept_ai_or_cmp, { "i", "s" }),
-                }),
-                sources = cmp.config.sources({
-                    { name = "nvim_lsp" },
-                    { name = "luasnip" },
-                    { name = "buffer" },
-                    { name = "path" },
-                }),
-            })
+            vim.keymap.set({ "i", "s" }, "<Tab>", function()
+                if vim.snippet.active({ direction = 1 }) then
+                    vim.snippet.jump(1)
+                    return ""
+                end
+                if accept_ai() then return "" end
+                return vim.fn.pumvisible() == 1 and "<C-n>" or "<Tab>"
+            end, { expr = true, silent = true })
 
-            -- Cmdline setup for "/" and "?"
-            cmp.setup.cmdline({ "/", "?" }, {
-                mapping = cmp.mapping.preset.cmdline(),
-                sources = { { name = "buffer" } }
-            })
+            vim.keymap.set({ "i", "s" }, "<S-Tab>", function()
+                if vim.snippet.active({ direction = -1 }) then
+                    vim.snippet.jump(-1)
+                    return ""
+                end
+                return vim.fn.pumvisible() == 1 and "<C-p>" or "<BS>"
+            end, { expr = true, silent = true })
 
-            -- Cmdline setup for ":"
-            cmp.setup.cmdline(":", {
-                mapping = cmp.mapping.preset.cmdline(),
-                sources = cmp.config.sources({
-                    { name = "path" }
-                }, {
-                    { name = "cmdline" }
-                }),
-                matching = {
-                    disallow_symbol_nonprefix_matching = false,
-                    disallow_fuzzy_matching = false,
-                    disallow_fullfuzzy_matching = false,
-                    disallow_partial_fuzzy_matching = false,
-                    disallow_prefix_unmatching = false,
-                },
-            })
+            vim.keymap.set({ "i", "s" }, "<CR>", function()
+                if accept_ai() then return "" end
+                if vim.fn.pumvisible() == 1 then
+                    return vim.fn.complete_info({ "selected" }).selected == -1 and "<C-e><CR>" or "<C-y>"
+                end
+                return "<CR>"
+            end, { expr = true, silent = true })
 
             -- Diagnostic appearance & behavior
             vim.diagnostic.config({

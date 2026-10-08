@@ -35,7 +35,7 @@ map("n", "d", '"+d', { desc = "Delete motion to clipboard" })
 map("n", "D", '"+D', { desc = "Delete to EOL to clipboard" })
 map("x", "d", '"+d', { desc = "Delete selection to clipboard" })
 
--- Shared paste-buffer picker (used by both VSCode and terminal Neovim)
+-- Neovim paste-buffer picker
 local function search_paste_buffer()
   local registers = { '"', "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "+" }
   local items = {}
@@ -74,35 +74,7 @@ local function search_paste_buffer()
   end)
 end
 
-if vim.g.vscode then
-    local vscode = require('vscode')
-
-    -- File Explorer (Reveal active file in VS Code sidebar)
-    map("n", "<leader>e", function() vscode.action("workbench.files.action.showActiveFileInExplorer") end, { desc = "Reveal File in Explorer" })
-
-    -- Window/Buffer Management (VS Code equivalent)
-    map("n", "<leader>v", function() vscode.action("workbench.action.splitEditor") end, { desc = "Split window vertically" })
-    map("n", "<leader>_", function() vscode.action("workbench.action.splitEditor") end, { desc = "Split window vertically (tmux)" })
-    map("n", "<leader>|", function() vscode.action("workbench.action.splitEditor") end, { desc = "Split window vertically" })
-    map("n", "<leader>-", function() vscode.action("workbench.action.splitEditorOrthogonal") end, { desc = "Split window horizontally" })
-    map("n", "<leader>c", function() vscode.action("workbench.action.files.newUntitledFile") end, { desc = "Create new buffer" })
-    map("n", "<leader>q", function() vscode.action("workbench.action.closeActiveEditor") end, { desc = "Close current buffer" })
-    map("n", "<leader>bn", function() vscode.action("workbench.action.nextEditor") end, { desc = "Next buffer" })
-    map("n", "<leader>bp", function() vscode.action("workbench.action.previousEditor") end, { desc = "Previous buffer" })
-
-    -- Space-p: Search through paste buffer (registers & clipboard history)
-    map("n", "<leader>p", search_paste_buffer, { desc = "Search paste buffer" })
-
-    map({ "i", "x", "n", "s" }, "<C-s>", function() vscode.action("workbench.action.files.save") end, { desc = "Save file" })
-
-    -- LSP Navigation
-    map("n", "gd", function() vscode.action("editor.action.revealDefinition") end, { desc = "Go to Definition" })
-    map("n", "gr", function() vscode.action("editor.action.goToReferences") end, { desc = "Go to References" })
-    map("n", "gi", function() vscode.action("editor.action.goToImplementation") end, { desc = "Go to Implementation" })
-    map("n", "K", function() vscode.action("editor.action.showHover") end, { desc = "Hover Documentation" })
-    map("n", "<leader>rn", function() vscode.action("editor.action.rename") end, { desc = "Rename Symbol" })
-    map("n", "<leader>ca", function() vscode.action("editor.action.quickFix") end, { desc = "Code Action" })
-else
+do
     map("n", "<leader>e", function()
       local api = require("nvim-tree.api")
       if vim.bo.filetype == "NvimTree" then
@@ -157,7 +129,7 @@ else
       set = function(state)
         if state then
           vim.g.ai_completion = "neocursor"
-          vim.g.ai_neocursor = not vim.g.vscode
+          vim.g.ai_neocursor = true
           vim.notify("Cursor Autocomplete enabled", vim.log.levels.INFO, { title = "AI" })
         else
           vim.g.ai_completion = "off"

@@ -28,12 +28,8 @@ return {
   },
   {
     "CopilotC-Nvim/CopilotChat.nvim",
-    cond = function()
-      return vim.g.ai_copilot
-    end,
     branch = "canary",
     dependencies = {
-      { "zbirenbaum/copilot.lua" },
       { "nvim-lua/plenary.nvim" },
     },
     build = "make tiktoken",
@@ -49,6 +45,7 @@ return {
     },
     keys = {
       { "<leader>cc", function() require("CopilotChat").open({ message = "#buffer:active" }) end, desc = "Copilot Chat with Buffer" },
+      { "<leader>aq", "<cmd>CopilotChat<cr>", desc = "Ask AI" },
       { "<leader>ce", "<cmd>CopilotChatExplain<cr>", desc = "Copilot Chat Explain" },
       { "<leader>cr", "<cmd>CopilotChatReview<cr>", desc = "Copilot Chat Review" },
       { "<leader>cf", "<cmd>CopilotChatFix<cr>", desc = "Copilot Chat Fix" },

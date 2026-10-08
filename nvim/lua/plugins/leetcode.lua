@@ -1,3 +1,5 @@
+local leet_arg = "leetcode.nvim"
+
 return {
   {
     "kawre/leetcode.nvim",
@@ -6,13 +8,19 @@ return {
       "nvim-telescope/telescope.nvim",
       "nvim-lua/plenary.nvim",
       "MunifTanjim/nui.nvim",
-      "nvim-tree/nvim-web-devicons",
     },
+    lazy = leet_arg ~= vim.fn.argv(0, -1),
     cmd = "Leet",
+    init = function()
+      vim.cmd([[cnoreabbrev <expr> leet (getcmdtype() == ':' && getcmdline() =~ '^leet') ? 'Leet' : 'leet']])
+    end,
     opts = {
-      arg = "leetcode.nvim",
+      arg = leet_arg,
       lang = "python3",
       picker = { provider = "telescope" },
+      plugins = {
+        non_standalone = true,
+      },
       injector = {},
       storage = {
         home = vim.fn.stdpath("data") .. "/leetcode",
@@ -21,3 +29,4 @@ return {
     },
   },
 }
+

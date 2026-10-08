@@ -1,7 +1,6 @@
 return {
   {
     "christoomey/vim-tmux-navigator",
-    cond = not vim.g.vscode,
     lazy = false,
     keys = {
       { "<c-h>", "<cmd><C-U>TmuxNavigateLeft<cr>", mode = { "n", "t" } },
@@ -13,7 +12,6 @@ return {
   },
   {
     "nvim-lualine/lualine.nvim",
-    cond = not vim.g.vscode,
     dependencies = { "nvim-tree/nvim-web-devicons" },
     opts = {
       sections = {
@@ -28,13 +26,14 @@ return {
   },
   { 
     "nvim-tree/nvim-tree.lua", 
-    cond = not vim.g.vscode, 
     dependencies = { "nvim-tree/nvim-web-devicons" }, 
     config = function()
       require("nvim-tree").setup({
         update_focused_file = { enable = true, update_root = true },
         sync_root_with_cwd = true,
         hijack_cursor = false,
+        -- Coalesce temporary directory creation/removal before rendering.
+        filesystem_watchers = { debounce_delay = 200 },
         actions = {
           open_file = {
             quit_on_open = false,
@@ -102,7 +101,6 @@ return {
   },
   {
     "scottmckendry/cyberdream.nvim",
-    cond = not vim.g.vscode,
     lazy = false,
     priority = 1000,
     config = function()
@@ -154,7 +152,6 @@ return {
   },
   {
     "RRethy/vim-illuminate",
-    cond = not vim.g.vscode,
     lazy = false,
     event = { "BufReadPost", "BufNewFile" },
     opts = {
@@ -171,7 +168,6 @@ return {
   },
   {
     "folke/noice.nvim",
-    cond = not vim.g.vscode,
     event = "VeryLazy",
     dependencies = { "MunifTanjim/nui.nvim" },
     config = function()
@@ -180,7 +176,6 @@ return {
           override = { 
             ["vim.lsp.util.convert_input_to_markdown_lines"] = true, 
             ["vim.lsp.util.stylize_markdown"] = true, 
-            ["cmp.entry.get_documentation"] = true 
           } 
         },
         -- Route common messages to 'mini' (bottom right) instead of a popup
@@ -199,7 +194,6 @@ return {
   },
   {
     "diegok/live-autoread.nvim",
-    cond = not vim.g.vscode,
     event = "BufReadPost",
     opts = {},
   },

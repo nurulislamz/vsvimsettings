@@ -47,7 +47,7 @@ zstyle ':completion:*' list-colors ''
 HISTFILE=~/.zsh_history
 HISTSIZE=10000
 SAVEHIST=10000
-setopt SHARE_HISTORY HIST_IGNORE_DUPS HIST_IGNORE_SPACE
+setopt SHARE_HISTORY HIST_IGNORE_DUPS HIST_IGNORE_SPACE IGNORE_EOF
 
 export nviminit="~/.config/nvim/init.lua"
 
@@ -68,3 +68,7 @@ eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 [ -s "/home/nurul/.openclaw/completions/openclaw.zsh" ] && . "/home/nurul/.openclaw/completions/openclaw.zsh"
 
 . "$HOME/.local/bin/env"
+ 
+# Fuzzy finder & directory jumping
+eval "$(fzf --zsh)"
+eval "$(zoxide init zsh)"

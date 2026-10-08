@@ -94,7 +94,7 @@ config.keys = {
         mods = "CTRL",
         action = wezterm.action_callback(function(window, pane)
             local sel = window:get_selection_text_for_pane(pane)
-            if sel ~= "" then
+            if sel and sel ~= "" then
                 window:perform_action(act.CopyTo("ClipboardAndPrimarySelection"), pane)
                 window:perform_action(act.ClearSelection, pane)
             else

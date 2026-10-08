@@ -2,7 +2,6 @@ return {
   { 
     "nvim-telescope/telescope.nvim", 
     lazy = false,
-    cond = not vim.g.vscode,
     branch = "0.1.x", 
     dependencies = { "nvim-lua/plenary.nvim" },
     config = function()
@@ -30,7 +29,6 @@ return {
   { 
     "nvim-treesitter/nvim-treesitter", 
     build = ":TSUpdate", 
-    cond = not vim.g.vscode,
     branch = "master",
     config = function() 
       require("nvim-treesitter.configs").setup({ 
@@ -62,16 +60,14 @@ return {
   },
   {
     "ahmedkhalf/project.nvim",
-    cond = not vim.g.vscode,
     config = function()
       require("project_nvim").setup({})
       require("telescope").load_extension("projects")
     end
   },
-  { "mbbill/undotree", lazy = false, cond = not vim.g.vscode, keys = { { "<leader>u", vim.cmd.UndotreeToggle, desc = "Toggle Undotree" } } },
+  { "mbbill/undotree", lazy = false, keys = { { "<leader>u", vim.cmd.UndotreeToggle, desc = "Toggle Undotree" } } },
   {
     "okuuva/auto-save.nvim",
-    cond = not vim.g.vscode,
     event = { "InsertLeave", "TextChanged" },
     opts = {
       debounce_delay = 1000,
@@ -95,7 +91,6 @@ return {
   { 
     "folke/trouble.nvim", 
     lazy = false,
-    cond = not vim.g.vscode,
     dependencies = { "nvim-tree/nvim-web-devicons" }, 
     keys = { { "<leader>xx", "<cmd>Trouble diagnostics toggle<cr>", desc = "Diagnostics (Trouble)" } }, 
     opts = {} 

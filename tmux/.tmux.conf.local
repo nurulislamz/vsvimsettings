@@ -373,7 +373,7 @@ tmux_conf_theme_clock_style="24"
 #   - false (default)
 #   - disabled
 # on Linux, this requires xsel, xclip or wl-copy
-tmux_conf_copy_to_os_clipboard=true
+tmux_conf_copy_to_os_clipboard=false
 
 
 # -- urlscan -------------------------------------------------------------------
@@ -454,21 +454,26 @@ bind -n C-BSpace send-keys M-BSpace #!important
 bind -n PageUp if-shell -F '#{alternate_on}' 'send-keys PageUp' 'copy-mode -eu' #!important
 bind -n PageDown if-shell -F '#{pane_in_mode}' 'send-keys -X page-down' 'send-keys PageDown' #!important
 
-# Ctrl+u / Ctrl+d half-page scroll tmux history without prefix/copy-mode ritual.
+# Alt+k (up) / Alt+j (down) quarter-page scroll tmux history without prefix/copy-mode ritual.
 # Pass through when the pane is in an alternate-screen app (vim, less, etc.).
 # -e exits copy mode once you page back to the live bottom.
-bind -n C-u if-shell -F '#{alternate_on}' 'send-keys C-u' 'copy-mode -e ; send-keys -X halfpage-up' #!important
-bind -n C-d if-shell -F '#{pane_in_mode}' 'send-keys -X halfpage-down' 'send-keys C-d' #!important
+bind -n M-k if-shell -F '#{alternate_on}' 'send-keys M-k' 'copy-mode -e ; send-keys -N "#{?#{e|<:#{pane_height},4},1,#{e|/:#{pane_height},4}}" -X scroll-up' #!important
+bind -n M-j if-shell -F '#{alternate_on}' 'send-keys M-j' \
+  "if-shell -F '#{pane_in_mode}' 'send-keys -N \"#{?#{e|<:#{pane_height},4},1,#{e|/:#{pane_height},4}}\" -X scroll-down'" #!important
 
-# Ensure both vi and emacs copy-mode key tables support Ctrl+u / Ctrl+d
+# Ensure both vi and emacs copy-mode key tables support Alt+k / Alt+j and Ctrl+u / Ctrl+d
+bind -T copy-mode-vi M-k send-keys -N '#{?#{e|<:#{pane_height},4},1,#{e|/:#{pane_height},4}}' -X scroll-up #!important
+bind -T copy-mode-vi M-j send-keys -N '#{?#{e|<:#{pane_height},4},1,#{e|/:#{pane_height},4}}' -X scroll-down #!important
+bind -T copy-mode M-k send-keys -N '#{?#{e|<:#{pane_height},4},1,#{e|/:#{pane_height},4}}' -X scroll-up #!important
+bind -T copy-mode M-j send-keys -N '#{?#{e|<:#{pane_height},4},1,#{e|/:#{pane_height},4}}' -X scroll-down #!important
 bind -T copy-mode-vi C-u send-keys -X halfpage-up #!important
 bind -T copy-mode-vi C-d send-keys -X halfpage-down #!important
 bind -T copy-mode C-u send-keys -X halfpage-up #!important
 bind -T copy-mode C-d send-keys -X halfpage-down #!important
 
-# Ctrl+C in copy-mode copies selection to Windows clipboard
-bind -T copy-mode-vi C-c send-keys -X copy-pipe-and-cancel 'clip.exe' #!important
-bind -T copy-mode C-c send-keys -X copy-pipe-and-cancel 'clip.exe' #!important
+# Ctrl+C in copy-mode copies selection via OSC 52
+bind -T copy-mode-vi C-c send-keys -X copy-selection-and-cancel #!important
+bind -T copy-mode C-c send-keys -X copy-selection-and-cancel #!important
 
 # display a message after toggling mouse support
 bind m run "cut -c3- '#{TMUX_CONF}' | sh -s _toggle_mouse" \; display 'mouse #{?#{mouse},on,off}'
@@ -595,8 +600,11 @@ bind-key -n M-d last-window #!important
 set -g automatic-rename on
 set -g automatic-rename-format '#{b:pane_current_path} | #{pane_current_command}'
 
-# Allow terminal escape sequences (image protocols: Kitty, Sixel, iTerm2)
+# Allow terminal escape sequences (image protocols: Kitty, Sixel, iTerm2) and OSC 52 clipboard
 set -g allow-passthrough on
+set -s set-clipboard on
+set -as terminal-features 'xterm*:clipboard:passthrough'
+set -as terminal-features 'wezterm:clipboard:passthrough'
 set -ga update-environment TERM
 set -ga update-environment TERM_PROGRAM
 

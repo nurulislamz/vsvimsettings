@@ -2,7 +2,6 @@ return {
   {
     "ThePrimeagen/harpoon",
     branch = "harpoon2",
-    cond = not vim.g.vscode,
     dependencies = { "nvim-lua/plenary.nvim" },
     config = function()
       local harpoon = require("harpoon")
