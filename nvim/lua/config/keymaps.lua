@@ -25,17 +25,6 @@ do
     map("n", '<leader>"', "<cmd>split<CR>", { desc = "Split horizontal" })
     map("n", "<leader>%", "<cmd>vsplit<CR>", { desc = "Split vertical" })
 
-    local function has_other_listed(buf)
-        for _, b in ipairs(vim.api.nvim_list_bufs()) do
-            if b ~= buf and vim.api.nvim_buf_is_valid(b) and vim.bo[b].buflisted then
-                if vim.api.nvim_buf_get_name(b) ~= "" then
-                    return true
-                end
-            end
-        end
-        return false
-    end
-
     local function normal_wins()
         local wins = {}
         for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
@@ -44,32 +33,6 @@ do
             end
         end
         return wins
-    end
-
-    -- Close current buffer; last real file + other tabs → close tab (no [No Name])
-    local function close_current_buffer()
-        if vim.bo.buftype == "quickfix" then
-            vim.cmd("cclose")
-            return
-        elseif vim.bo.filetype == "trouble" then
-            vim.cmd("Trouble close")
-            return
-        elseif vim.bo.filetype == "oil" then
-            require("oil").close()
-            return
-        elseif vim.bo.buftype == "terminal" then
-            vim.cmd("bd!")
-            return
-        end
-        local buf = vim.api.nvim_get_current_buf()
-        if not has_other_listed(buf) and vim.fn.tabpagenr("$") > 1 then
-            pcall(vim.cmd, "tabclose")
-            return
-        end
-        if not has_other_listed(buf) then
-            return
-        end
-        require("snacks").bufdelete()
     end
 
     -- tmux prefix+x: kill pane; last pane in tab → tabclose; last tab → no-op
@@ -84,7 +47,7 @@ do
         end
     end
 
-    map("n", "<leader>q", close_current_buffer, { desc = "Close current buffer or tab" })
+    map("n", "<leader>q", "<C-w>q", { desc = "Quit window (Ctrl-w q)" })
     map("n", "<leader>x", kill_pane, { desc = "Kill pane (tmux x)" })
 
     -- Tabs (Scott McKendry convention)

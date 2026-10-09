@@ -531,11 +531,6 @@ tmux_conf_uninstall_plugins_on_reload=true
 set -g @plugin 'tmux-plugins/tmux-resurrect'
 set -g @plugin 'tmux-plugins/tmux-continuum'
 set -g @plugin 'sainnhe/tmux-fzf'
-set -g @plugin 'omerxx/tmux-sessionx'
-set -g @sessionx-bind 'O'
-set -g @sessionx-bind-move-window 'alt-m'
-set -g @sessionx-fzf-builtin-tmux 'on'
-set -g @sessionx-preview-enabled 'false'
 set -g @continuum-restore 'on'
 
 set -g @plugin 'alexwforsythe/tmux-which-key'   # prefix + Space -> popup menu
@@ -543,6 +538,9 @@ set -g @plugin 'azorng/tmux-smooth-scroll'
 set -g @smooth-scroll-speed '30'
 set -g @smooth-scroll-normal '1'
 set -g @smooth-scroll-easing 'sine'
+
+# sessionx removed; drop leftover prefix+O bind after reload
+unbind-key O
 
 # kill pane with no confirmation prompt
 bind x kill-pane
