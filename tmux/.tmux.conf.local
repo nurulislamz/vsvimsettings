@@ -454,28 +454,25 @@ bind -n C-BSpace send-keys M-BSpace #!important
 bind -n PageUp if-shell -F '#{alternate_on}' 'send-keys PageUp' 'copy-mode -eu' #!important
 bind -n PageDown if-shell -F '#{pane_in_mode}' 'send-keys -X page-down' 'send-keys PageDown' #!important
 
-# Alt+k (up) / Alt+j (down) 2-line scroll tmux history without prefix/copy-mode ritual.
-# Alt+K (up) / Alt+J (down) 8-line fast scroll.
-# Pass through when the pane is in an alternate-screen app (vim, less, etc.).
-# -e exits copy mode once you page back to the live bottom.
-bind -n M-k if-shell -F '#{alternate_on}' 'send-keys M-k' 'copy-mode -e ; send-keys -N 2 -X scroll-up' #!important
-bind -n M-j if-shell -F '#{alternate_on}' 'send-keys M-j' 'if-shell -F "#{pane_in_mode}" "send-keys -N 2 -X scroll-down"' #!important
-bind -n M-K if-shell -F '#{alternate_on}' 'send-keys M-K' 'copy-mode -e ; send-keys -N 8 -X scroll-up' #!important
-bind -n M-J if-shell -F '#{alternate_on}' 'send-keys M-J' 'if-shell -F "#{pane_in_mode}" "send-keys -N 8 -X scroll-down"' #!important
+# Alt+k/j = 2-line smooth scroll; Alt+K/J = 8-line. Pass through on alt-screen.
+# Numeric scroll.sh args so tmux-smooth-scroll does not flatten these to @smooth-scroll-normal.
+bind -n M-k if-shell -F '#{alternate_on}' 'send-keys M-k' 'copy-mode -e ; run-shell -b "/home/nurul/.tmux/plugins/tmux-smooth-scroll/src/scroll.sh up 2"' #!important
+bind -n M-j if-shell -F '#{alternate_on}' 'send-keys M-j' 'if-shell -F "#{pane_in_mode}" "run-shell -b \"/home/nurul/.tmux/plugins/tmux-smooth-scroll/src/scroll.sh down 2\""' #!important
+bind -n M-K if-shell -F '#{alternate_on}' 'send-keys M-K' 'copy-mode -e ; run-shell -b "/home/nurul/.tmux/plugins/tmux-smooth-scroll/src/scroll.sh up 8"' #!important
+bind -n M-J if-shell -F '#{alternate_on}' 'send-keys M-J' 'if-shell -F "#{pane_in_mode}" "run-shell -b \"/home/nurul/.tmux/plugins/tmux-smooth-scroll/src/scroll.sh down 8\""' #!important
 
-# Ensure both vi and emacs copy-mode key tables support Alt+k/j (2 lines) and Alt+Shift+K/J (8 lines)
-bind -T copy-mode-vi M-k send-keys -N 2 -X scroll-up #!important
-bind -T copy-mode-vi M-j send-keys -N 2 -X scroll-down #!important
-bind -T copy-mode-vi M-K send-keys -N 8 -X scroll-up #!important
-bind -T copy-mode-vi M-J send-keys -N 8 -X scroll-down #!important
-bind -T copy-mode M-k send-keys -N 2 -X scroll-up #!important
-bind -T copy-mode M-j send-keys -N 2 -X scroll-down #!important
-bind -T copy-mode M-K send-keys -N 8 -X scroll-up #!important
-bind -T copy-mode M-J send-keys -N 8 -X scroll-down #!important
-bind -T copy-mode-vi C-u send-keys -X halfpage-up #!important
-bind -T copy-mode-vi C-d send-keys -X halfpage-down #!important
-bind -T copy-mode C-u send-keys -X halfpage-up #!important
-bind -T copy-mode C-d send-keys -X halfpage-down #!important
+bind -T copy-mode-vi M-k run-shell -b '/home/nurul/.tmux/plugins/tmux-smooth-scroll/src/scroll.sh up 2' #!important
+bind -T copy-mode-vi M-j run-shell -b '/home/nurul/.tmux/plugins/tmux-smooth-scroll/src/scroll.sh down 2' #!important
+bind -T copy-mode-vi M-K run-shell -b '/home/nurul/.tmux/plugins/tmux-smooth-scroll/src/scroll.sh up 8' #!important
+bind -T copy-mode-vi M-J run-shell -b '/home/nurul/.tmux/plugins/tmux-smooth-scroll/src/scroll.sh down 8' #!important
+bind -T copy-mode M-k run-shell -b '/home/nurul/.tmux/plugins/tmux-smooth-scroll/src/scroll.sh up 2' #!important
+bind -T copy-mode M-j run-shell -b '/home/nurul/.tmux/plugins/tmux-smooth-scroll/src/scroll.sh down 2' #!important
+bind -T copy-mode M-K run-shell -b '/home/nurul/.tmux/plugins/tmux-smooth-scroll/src/scroll.sh up 8' #!important
+bind -T copy-mode M-J run-shell -b '/home/nurul/.tmux/plugins/tmux-smooth-scroll/src/scroll.sh down 8' #!important
+bind -T copy-mode-vi C-u send-keys -X halfpage-up
+bind -T copy-mode-vi C-d send-keys -X halfpage-down
+bind -T copy-mode C-u send-keys -X halfpage-up
+bind -T copy-mode C-d send-keys -X halfpage-down
 
 # Ctrl+C in copy-mode copies selection via OSC 52
 bind -T copy-mode-vi C-c send-keys -X copy-selection-and-cancel #!important
@@ -502,7 +499,8 @@ set -g status-position bottom
 # by default, launching tmux will update tpm and all plugins
 #   - true (default)
 #   - false
-tmux_conf_update_plugins_on_launch=true
+# false: git-pull on launch races continuum auto-restore
+tmux_conf_update_plugins_on_launch=false
 
 # by default, reloading the configuration will update tpm and all plugins
 #   - true (default)
@@ -526,20 +524,23 @@ tmux_conf_uninstall_plugins_on_reload=true
 # /!\ the 'set -g @tpm_plugins' syntax is not supported
 # to enable a plugin, use the 'set -g @plugin' syntax:
 # visit https://github.com/tmux-plugins for available plugins
-#set -g @plugin 'tmux-plugins/tmux-copycat'
-#set -g @plugin 'tmux-plugins/tmux-cpu'
+# oh-my-tmux splits @plugin values on spaces: no inline comments, options after.
 set -g @plugin 'tmux-plugins/tmux-resurrect'
-set -g @plugin 'tmux-plugins/tmux-continuum'
 set -g @plugin 'sainnhe/tmux-fzf'
-set -g @continuum-restore 'on'
-
-set -g @plugin 'alexwforsythe/tmux-which-key'   # prefix + Space -> popup menu
+set -g @plugin 'alexwforsythe/tmux-which-key'
 set -g @plugin 'azorng/tmux-smooth-scroll'
+set -g @plugin 'tmux-plugins/tmux-continuum'
+
+# resurrect restores nvim as a process; persistence.nvim autoloads on VimEnter.
+# Do not set @resurrect-strategy-nvim session (that is vim-obsession / Session.vim).
+set -g @continuum-restore 'on'
+set -g @continuum-save-interval '15'
+
 set -g @smooth-scroll-speed '30'
 set -g @smooth-scroll-normal '1'
 set -g @smooth-scroll-easing 'sine'
+set -g @smooth-scroll-mouse 'true'
 
-# sessionx removed; drop leftover prefix+O bind after reload
 unbind-key O
 
 # kill pane with no confirmation prompt

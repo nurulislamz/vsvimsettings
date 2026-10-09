@@ -9,8 +9,9 @@ map("n", "<Esc>", "<cmd>nohlsearch<CR>", { desc = "Clear search highlights" })
 map("n", "<leader>nh", "<cmd>nohlsearch<CR>", { desc = "Clear search highlights" })
 
 do
+    local snacks = require("snacks")
+
     map("n", "<leader>e", function()
-        local snacks = require("snacks")
         local explorer = snacks.picker.get({ source = "explorer" })[1]
         if explorer then
             explorer:close()
@@ -68,7 +69,21 @@ do
     end, { desc = "Toggle last two tabs/buffers" })
 
     -- Toggles (via Snacks)
-    local snacks = require("snacks")
+    local function map_plugin_toggle(lhs, name, get, toggle)
+        snacks.toggle({
+            name = name,
+            get = function()
+                local ok, value = pcall(get)
+                return ok and value or false
+            end,
+            set = function(state)
+                local ok, value = pcall(get)
+                if ok and value ~= state then
+                    toggle()
+                end
+            end,
+        }):map(lhs)
+    end
 
     snacks.toggle({
         name = "Autoformat (on save)",
@@ -104,121 +119,88 @@ do
     snacks.toggle.option("conceallevel", { off = 0, on = 2 }):map("<leader>tC")
 
     local disabled_lsp_configs = {}
+
+    local function lsp_enabled()
+        if vim.g.lsp_disabled ~= nil then
+            return not vim.g.lsp_disabled
+        end
+        local has_clients = #vim.lsp.get_clients() > 0
+        local has_configs = vim.lsp._enabled_configs and next(vim.lsp._enabled_configs) ~= nil
+        return has_clients or has_configs
+    end
+
+    local function disable_lsp()
+        local configs = {}
+        for name in pairs(vim.lsp._enabled_configs or {}) do
+            table.insert(configs, name)
+        end
+        if #configs > 0 then
+            disabled_lsp_configs = configs
+            pcall(vim.lsp.enable, configs, false)
+        end
+        for _, client in ipairs(vim.lsp.get_clients()) do
+            for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+                if vim.api.nvim_buf_is_loaded(buf) then
+                    pcall(vim.lsp.buf_detach_client, buf, client.id)
+                end
+            end
+            pcall(function() client:stop() end)
+        end
+    end
+
+    local function enable_lsp()
+        if #disabled_lsp_configs > 0 then
+            pcall(vim.lsp.enable, disabled_lsp_configs, true)
+        elseif vim.lsp.config and vim.lsp.config._configs then
+            local names = {}
+            for name in pairs(vim.lsp.config._configs) do
+                table.insert(names, name)
+            end
+            pcall(vim.lsp.enable, names, true)
+        end
+        vim.cmd.doautoall("FileType")
+    end
+
     snacks.toggle({
         name = "LSP",
-        get = function()
-            if vim.g.lsp_disabled ~= nil then
-                return not vim.g.lsp_disabled
-            end
-            return #vim.lsp.get_clients() > 0 or (vim.lsp._enabled_configs and next(vim.lsp._enabled_configs) ~= nil)
-        end,
+        get = lsp_enabled,
         set = function(state)
             vim.g.lsp_disabled = not state
-            if not state then
-                local configs = {}
-                if vim.lsp._enabled_configs then
-                    for name in pairs(vim.lsp._enabled_configs) do
-                        table.insert(configs, name)
-                    end
-                end
-                if #configs > 0 then
-                    disabled_lsp_configs = configs
-                    pcall(vim.lsp.enable, configs, false)
-                end
-                for _, client in ipairs(vim.lsp.get_clients()) do
-                    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-                        if vim.api.nvim_buf_is_loaded(buf) then
-                            pcall(vim.lsp.buf_detach_client, buf, client.id)
-                        end
-                    end
-                    pcall(function() client:stop() end)
-                end
-            else
-                if #disabled_lsp_configs > 0 then
-                    pcall(vim.lsp.enable, disabled_lsp_configs, true)
-                elseif vim.lsp.config and vim.lsp.config._configs then
-                    local all_configs = {}
-                    for name in pairs(vim.lsp.config._configs) do
-                        table.insert(all_configs, name)
-                    end
-                    pcall(vim.lsp.enable, all_configs, true)
-                end
-                vim.cmd.doautoall("FileType")
+            if state then
+                enable_lsp()
+                return
             end
+            disable_lsp()
         end,
     }):map("<leader>tp")
 
-    -- LSP Word Reference Highlight
     snacks.toggle.words():map("<leader>tW")
-
-    -- Whitespace and Search UI options
     snacks.toggle.option("list", { name = "Whitespace Chars" }):map("<leader>tI")
     snacks.toggle.option("hlsearch", { name = "Search Highlight" }):map("<leader>tH")
 
-    -- Git Blame & Gutter Signs
-    snacks.toggle({
-        name = "Git Line Blame",
-        get = function()
-            local ok, cfg = pcall(function() return require("gitsigns.config").config end)
-            return ok and cfg and cfg.current_line_blame or false
-        end,
-        set = function(state)
-            local ok, gs = pcall(require, "gitsigns")
-            if ok then
-                local cfg = require("gitsigns.config").config
-                if cfg.current_line_blame ~= state then
-                    gs.toggle_current_line_blame()
-                end
-            end
-        end,
-    }):map("<leader>tb")
+    map_plugin_toggle("<leader>tb", "Git Line Blame", function()
+        return require("gitsigns.config").config.current_line_blame
+    end, function()
+        require("gitsigns").toggle_current_line_blame()
+    end)
 
-    snacks.toggle({
-        name = "Git Signs (Gutter)",
-        get = function()
-            local ok, cfg = pcall(function() return require("gitsigns.config").config end)
-            return ok and cfg and cfg.signcolumn or false
-        end,
-        set = function(state)
-            local ok, gs = pcall(require, "gitsigns")
-            if ok then
-                local cfg = require("gitsigns.config").config
-                if cfg.signcolumn ~= state then
-                    gs.toggle_signs()
-                end
-            end
-        end,
-    }):map("<leader>tG")
+    map_plugin_toggle("<leader>tG", "Git Signs (Gutter)", function()
+        return require("gitsigns.config").config.signcolumn
+    end, function()
+        require("gitsigns").toggle_signs()
+    end)
 
-    -- Auto Save
-    snacks.toggle({
-        name = "Auto Save",
-        get = function()
-            local ok, as = pcall(require, "auto-save")
-            return ok and as.enabled() or false
-        end,
-        set = function(state)
-            local ok, as = pcall(require, "auto-save")
-            if ok and as.enabled() ~= state then
-                as.toggle()
-            end
-        end,
-    }):map("<leader>ta")
+    map_plugin_toggle("<leader>ta", "Auto Save", function()
+        return require("auto-save").enabled()
+    end, function()
+        require("auto-save").toggle()
+    end)
 
-    -- Smear Cursor
-    snacks.toggle({
-        name = "Smear Cursor",
-        get = function()
-            local ok, sc = pcall(require, "smear_cursor")
-            return ok and sc.enabled or false
-        end,
-        set = function(state)
-            local ok, sc = pcall(require, "smear_cursor")
-            if ok and sc.enabled ~= state then
-                sc.toggle()
-            end
-        end,
-    }):map("<leader>tu")
+    map_plugin_toggle("<leader>tu", "Smear Cursor", function()
+        return require("smear_cursor").enabled
+    end, function()
+        require("smear_cursor").toggle()
+    end)
 
     -- Toggle Menu (<leader>tm)
     map("n", "<leader>tm", function()
@@ -332,66 +314,61 @@ do
     pcall(vim.keymap.del, "n", "grt")
     pcall(vim.keymap.del, "x", "gra")
 
-    -- Quickfix reference preview namespace
-    local qf_ns = vim.api.nvim_create_namespace("qf_reference_preview")
+    local function setup_qf_preview()
+        local qf_ns = vim.api.nvim_create_namespace("qf_reference_preview")
 
-    -- Enhance Quickfix submenu navigation:
-    -- Enter / click jumps to & highlights the reference while keeping cursor in the submenu.
-    -- Space+q or q closes the submenu and stays at your chosen reference in the file.
-    vim.api.nvim_create_autocmd("FileType", {
-        pattern = "qf",
-        callback = function(event)
-            local function qf_jump(stay_in_qf)
-                local qf_win = vim.api.nvim_get_current_win()
-                local lnum = vim.api.nvim_win_get_cursor(0)[1]
+        vim.api.nvim_create_autocmd("FileType", {
+            pattern = "qf",
+            callback = function(event)
+                local function qf_jump(stay_in_qf)
+                    local qf_win = vim.api.nvim_get_current_win()
+                    local lnum = vim.api.nvim_win_get_cursor(0)[1]
 
-                local ok, _ = pcall(vim.cmd, lnum .. "cc")
-                if not ok then return end
+                    local ok, _ = pcall(vim.cmd, lnum .. "cc")
+                    if not ok then return end
 
-                local target_win = vim.api.nvim_get_current_win()
-                if target_win ~= qf_win then
-                    vim.cmd("normal! zz")
-                    local target_buf = vim.api.nvim_win_get_buf(target_win)
-                    local cursor = vim.api.nvim_win_get_cursor(target_win)
-                    local line_idx = cursor[1] - 1
+                    local target_win = vim.api.nvim_get_current_win()
+                    if target_win ~= qf_win then
+                        vim.cmd("normal! zz")
+                        local target_buf = vim.api.nvim_win_get_buf(target_win)
+                        local cursor = vim.api.nvim_win_get_cursor(target_win)
+                        local line_idx = cursor[1] - 1
 
-                    vim.api.nvim_buf_clear_namespace(target_buf, qf_ns, 0, -1)
-                    pcall(vim.hl.range, target_buf, qf_ns, "IncSearch", { line_idx, 0 }, { line_idx, -1 }, {
-                        timeout = 1500,
-                    })
+                        vim.api.nvim_buf_clear_namespace(target_buf, qf_ns, 0, -1)
+                        pcall(vim.hl.range, target_buf, qf_ns, "IncSearch", { line_idx, 0 }, { line_idx, -1 }, {
+                            timeout = 1500,
+                        })
+                    end
+
+                    if stay_in_qf and vim.api.nvim_win_is_valid(qf_win) then
+                        vim.api.nvim_set_current_win(qf_win)
+                    end
                 end
 
-                if stay_in_qf and vim.api.nvim_win_is_valid(qf_win) then
-                    vim.api.nvim_set_current_win(qf_win)
-                end
-            end
+                vim.keymap.set("n", "<CR>", function() qf_jump(true) end,
+                    { buffer = event.buf, desc = "Preview reference (stay in submenu)" })
+                vim.keymap.set("n", "<2-LeftMouse>", function() qf_jump(true) end,
+                    { buffer = event.buf, desc = "Preview reference (stay in submenu)" })
+                vim.keymap.set("n", "o", function()
+                    qf_jump(false)
+                    vim.cmd("cclose")
+                end, { buffer = event.buf, desc = "Jump to reference and close submenu" })
+                vim.keymap.set("n", "<leader>q", function() vim.cmd("cclose") end,
+                    { buffer = event.buf, desc = "Close submenu" })
+                vim.keymap.set("n", "q", function() vim.cmd("cclose") end,
+                    { buffer = event.buf, desc = "Close submenu" })
+            end,
+        })
 
-            -- Enter / Double Click: jump to reference & highlight, keep cursor in submenu
-            vim.keymap.set("n", "<CR>", function() qf_jump(true) end,
-                { buffer = event.buf, desc = "Preview reference (stay in submenu)" })
-            vim.keymap.set("n", "<2-LeftMouse>", function() qf_jump(true) end,
-                { buffer = event.buf, desc = "Preview reference (stay in submenu)" })
-
-            -- o: jump to reference and close submenu immediately
-            vim.keymap.set("n", "o", function()
-                qf_jump(false)
-                vim.cmd("cclose")
-            end, { buffer = event.buf, desc = "Jump to reference and close submenu" })
-
-            -- <leader>q (Space+q) or q: close the submenu
-            vim.keymap.set("n", "<leader>q", function() vim.cmd("cclose") end,
-                { buffer = event.buf, desc = "Close submenu" })
-            vim.keymap.set("n", "q", function() vim.cmd("cclose") end, { buffer = event.buf, desc = "Close submenu" })
-        end,
-    })
-
-    -- Also close Trouble with <leader>q if open
-    vim.api.nvim_create_autocmd("FileType", {
-        pattern = "trouble",
-        callback = function(event)
-            vim.keymap.set("n", "<leader>q", "<cmd>Trouble close<CR>", { buffer = event.buf, desc = "Close Trouble" })
-        end,
-    })
+        vim.api.nvim_create_autocmd("FileType", {
+            pattern = "trouble",
+            callback = function(event)
+                vim.keymap.set("n", "<leader>q", "<cmd>Trouble close<CR>",
+                    { buffer = event.buf, desc = "Close Trouble" })
+            end,
+        })
+    end
+    setup_qf_preview()
 
     map("n", "gd", "<cmd>Glance definitions<CR>", { desc = "Smart Go-to-Definition (Glance)" })
     map("n", "gr", "<cmd>Glance references<CR>", { desc = "Go to References (Glance)" })
@@ -406,44 +383,47 @@ do
     map("n", "[d", vim.diagnostic.goto_prev, { desc = "Prev Diagnostic" })
 
     -- Hidden buffers can be LSP dependencies; refresh them while idle too.
-    local function check_buffer_time(buf)
-        if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].buftype == "" then
-            vim.cmd("checktime " .. buf)
+    local function setup_disk_reload()
+        local function check_buffer_time(buf)
+            if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].buftype == "" then
+                vim.cmd("checktime " .. buf)
+            end
         end
-    end
 
-    vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHoldI" }, {
-        callback = function(event)
-            if vim.fn.mode() == "c" then return end
-            vim.schedule(function()
-                if event.event == "FocusGained" or event.event == "CursorHold" or event.event == "CursorHoldI" then
+        vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHoldI" }, {
+            callback = function(event)
+                if vim.fn.mode() == "c" then return end
+                vim.schedule(function()
+                    if event.event == "BufEnter" then
+                        check_buffer_time(event.buf)
+                        return
+                    end
                     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
                         check_buffer_time(buf)
                     end
-                else
-                    check_buffer_time(event.buf)
-                end
-            end)
-        end,
-    })
+                end)
+            end,
+        })
 
-    -- Coalesce Pyright refreshes when several external edits reload together.
-    local reload_seq = 0
-    vim.api.nvim_create_autocmd("FileChangedShellPost", {
-        callback = function(event)
-            if vim.bo[event.buf].filetype ~= "python" then return end
-            reload_seq = reload_seq + 1
-            local seq = reload_seq
-            vim.defer_fn(function()
-                if seq ~= reload_seq then return end
-                for _, client in ipairs(vim.lsp.get_clients()) do
-                    if client.name == "pyright" or client.name == "basedpyright" then
-                        client:notify("workspace/didChangeConfiguration", { settings = client.config.settings })
+        -- Coalesce Pyright refreshes when several external edits reload together.
+        local reload_seq = 0
+        vim.api.nvim_create_autocmd("FileChangedShellPost", {
+            callback = function(event)
+                if vim.bo[event.buf].filetype ~= "python" then return end
+                reload_seq = reload_seq + 1
+                local seq = reload_seq
+                vim.defer_fn(function()
+                    if seq ~= reload_seq then return end
+                    for _, client in ipairs(vim.lsp.get_clients()) do
+                        if client.name == "pyright" or client.name == "basedpyright" then
+                            client:notify("workspace/didChangeConfiguration", { settings = client.config.settings })
+                        end
                     end
-                end
-            end, 150)
-        end,
-    })
+                end, 150)
+            end,
+        })
+    end
+    setup_disk_reload()
     map("n", "<leader>lr", "<cmd>LspRestart<CR>", { desc = "Restart LSP server" })
 
 

@@ -40,14 +40,14 @@ if [[ "$(readlink -f "$HOME/.tmux.conf.local" 2>/dev/null)" == *vsvimsettings/tm
 else
   fail '~/.tmux.conf.local is not the vsvimsettings symlink'
 fi
-if ! tmux show -g @continuum-restore 2>/dev/null | grep -q .; then
-  ok 'continuum-restore not active'
+if tmux show -g @continuum-restore 2>/dev/null | grep -q "on"; then
+  ok 'continuum-restore on'
 else
-  fail 'continuum-restore still active'
+  fail "continuum-restore missing ($(tmux show -g @continuum-restore 2>/dev/null | tr '\n' ' '))"
 fi
-plugin_extra="$(ls "$HOME/.tmux/plugins" 2>/dev/null | grep -Ev '^(tpm|tpm_log.txt|tmux-which-key)$' || true)"
+plugin_extra="$(ls "$HOME/.tmux/plugins" 2>/dev/null | grep -Ev '^(tpm|tpm_log.txt|tmux-which-key|tmux-resurrect|tmux-continuum|tmux-fzf|tmux-smooth-scroll)$' || true)"
 if [[ -z "$plugin_extra" ]]; then
-  ok 'only tpm + which-key installed'
+  ok 'tmux plugin set is resurrect/continuum/fzf/which-key/smooth-scroll'
 else
   fail "unexpected tmux plugins: $plugin_extra"
 fi

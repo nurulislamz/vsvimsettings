@@ -9,7 +9,9 @@ Based on [oh-my-tmux](https://github.com/gpakosz/.tmux). All personal tweaks liv
 - **Tabs**: rounded (Chrome-tab) separators via the semicircle Powerline glyphs.
 - **Status right**: stripped to flag indicators only (prefix / mouse / pairing / sync) —
   no battery, clock, date, user, or hostname.
-- **Plugin**: `alexwforsythe/tmux-which-key` — `prefix + Space` opens a popup command menu.
+- **Plugins**: which-key (`prefix + Space`), tmux-fzf (`prefix + F`),
+  smooth-scroll, resurrect + continuum (auto-save 15m, restore on server start).
+  nvim buffers come back via persistence.nvim, not Session.vim.
 
 ## Install
 
