@@ -1,3 +1,4 @@
+-- GitHub Copilot. Loaded only when vim.g.ai_copilot.
 return {
   {
     "zbirenbaum/copilot.lua",

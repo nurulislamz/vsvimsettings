@@ -1,9 +1,5 @@
 return {
   { "tpope/vim-fugitive" },
-  { 
-    "kdheepak/lazygit.nvim", 
-    enabled = false,
-  },
   {
     "esmuellert/codediff.nvim",
     cmd = "CodeDiff",
@@ -38,7 +34,6 @@ return {
     opts = {
       formatters_by_ft = {
         lua = { "stylua" },
-        cs = { "csharpier" },
         go = { "gofumpt", "goimports" },
         c = { "clang-format" },
         cpp = { "clang-format" },

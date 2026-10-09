@@ -104,6 +104,7 @@ config.keys = {
     },
     -- Shift+Enter: send CSI u sequence (\x1b[13;2u) for newline in agy, TUIs, and shells
     { key = "Enter", mods = "SHIFT", action = act.SendString("\x1b[13;2u") },
+    { key = "CapsLock", action = act.SendKey({ key = "Escape" }) },
 }
 
 -- Default Shell / Domain Configuration

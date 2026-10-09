@@ -30,12 +30,4 @@ return {
     })
     require("telescope").load_extension("neoclip")
   end,
-  keys = {
-    { "<leader>p", function()
-      require("telescope").extensions.neoclip.default({
-        sorting_strategy = "ascending",
-        layout_config = { prompt_position = "top" },
-      })
-    end, desc = "Search paste buffer" },
-  },
 }

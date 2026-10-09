@@ -15,12 +15,9 @@ return {
 
       -- Add current file to Harpoon
       vim.keymap.set("n", "<leader>a", function() harpoon:list():add() end, { desc = "Harpoon add file" })
-      vim.keymap.set("n", "<leader>ha", function() harpoon:list():add() end, { desc = "Harpoon add file" })
 
       -- Quick menu (toggle list)
       vim.keymap.set("n", "<C-e>", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end, { desc = "Harpoon quick menu" })
-      vim.keymap.set("n", "<leader>hh", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end, { desc = "Harpoon quick menu" })
-      vim.keymap.set("n", "<leader>hm", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end, { desc = "Harpoon quick menu" })
 
       -- Direct file jumps 1-4 (<leader>1..<leader>4 and <leader>h1..<leader>h4)
       vim.keymap.set("n", "<leader>1", function() harpoon:list():select(1) end, { desc = "Harpoon file 1" })
@@ -40,8 +37,6 @@ return {
       vim.keymap.set("n", "<C-4>", function() harpoon:list():select(4) end, { desc = "Harpoon file 4" })
 
       -- Next / Previous file in list
-      vim.keymap.set("n", "<leader>hn", function() harpoon:list():next() end, { desc = "Harpoon next file" })
-      vim.keymap.set("n", "<leader>hp", function() harpoon:list():prev() end, { desc = "Harpoon prev file" })
       vim.keymap.set("n", "]h", function() harpoon:list():next() end, { desc = "Harpoon next file" })
       vim.keymap.set("n", "[h", function() harpoon:list():prev() end, { desc = "Harpoon prev file" })
 
@@ -58,7 +53,7 @@ return {
           previewer = conf.file_previewer({}),
           sorter = conf.generic_sorter({}),
         }):find()
-      end, { desc = "Harpoon (Telescope)" })
+      end, { desc = "Harpoon list picker (Telescope)" })
     end,
   },
 }

@@ -486,8 +486,8 @@ bind m run "cut -c3- '#{TMUX_CONF}' | sh -s _toggle_mouse" \; display 'mouse #{?
 
 set -g alternate-screen on
 
-# move status line to top
-set -g status-position top
+# move status line to bottom
+set -g status-position bottom
 
 
 # -- tpm -----------------------------------------------------------------------
