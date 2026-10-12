@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "${1:-}" == dashboard ]]; then
+  shift
+  if [[ $# -eq 0 ]]; then
+    exec "$HOME/.local/bin/workmux-dashboard-grouped"
+  fi
+  args=()
+  for arg in "$@"; do
+    if [[ "$arg" == --native ]]; then
+      continue
+    fi
+    args+=("$arg")
+  done
+  exec "$HOME/.local/libexec/workmux" dashboard "${args[@]}"
+fi
+if [[ -z "${WM_SANDBOX_GUEST:-}" && ( -n "${TMUX_PANE:-}" || -n "${CODEX_ACCOUNT:-}" ) ]]; then
+  if [[ $# == 1 && $1 == register-agent ]]; then
+    exec "$HOME/.local/bin/workmux-agent-hook" "$@"
+  fi
+  if [[ $# == 2 && $1 == set-window-status ]]; then
+    case "$2" in
+      working|waiting|done|clear) exec "$HOME/.local/bin/workmux-agent-hook" "$@" ;;
+    esac
+  fi
+fi
+exec "$HOME/.local/libexec/workmux" "$@"

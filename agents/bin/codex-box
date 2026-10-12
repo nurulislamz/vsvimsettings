@@ -1,0 +1,258 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# codex-box: Lightweight Container Runner for Multi-Account OpenAI Codex
+# ==============================================================================
+set -euo pipefail
+
+CONTAINERS_DIR="$HOME/.codex-containers"
+CMD="$(basename "$0")"
+
+# Handle Subcommands: add / new / create
+if [ "${1:-}" = "add" ] || [ "${1:-}" = "new" ] || [ "${1:-}" = "create" ]; then
+  if [ $# -lt 2 ] || [ -z "${2:-}" ]; then
+    echo "Usage: $CMD add <box-name>" >&2
+    exit 1
+  fi
+  BOX_NAME="$2"
+  if [[ "$BOX_NAME" =~ ^- ]]; then
+    echo "Error: Invalid box name '$BOX_NAME'" >&2
+    exit 1
+  fi
+  PROFILE_DIR="$CONTAINERS_DIR/$BOX_NAME"
+  if [ -d "$PROFILE_DIR" ]; then
+    echo "Box '$BOX_NAME' already exists ($PROFILE_DIR)."
+    exit 0
+  fi
+
+  mkdir -p "$PROFILE_DIR/.codex" \
+           "$PROFILE_DIR/tmp" \
+           "$HOME/.local/state/openusage"
+  chmod 1777 "$PROFILE_DIR/tmp" 2>/dev/null || true
+
+  # Sync global skills and rules if available on host
+  for src in skills rules; do
+    if [ -d "$HOME/.codex/$src" ]; then
+      mkdir -p "$PROFILE_DIR/.codex/$src"
+      cp -rn "$HOME/.codex/$src"/. "$PROFILE_DIR/.codex/$src/" 2>/dev/null || true
+    fi
+  done
+  if [ -f "$HOME/.config/agents/AGENTS.md" ]; then
+    ln -sf "$HOME/.config/agents/AGENTS.md" "$PROFILE_DIR/.codex/AGENTS.md"
+  elif [ -f "$HOME/.codex/AGENTS.md" ]; then
+    cp -n "$HOME/.codex/AGENTS.md" "$PROFILE_DIR/.codex/AGENTS.md" 2>/dev/null || true
+  fi
+
+  echo "✨ Created Codex box '$BOX_NAME' in $PROFILE_DIR"
+  echo "Launch with: $CMD $BOX_NAME"
+  exit 0
+fi
+
+# Handle Subcommands: list / ls
+if [ "${1:-}" = "list" ] || [ "${1:-}" = "ls" ] || [ "${1:-}" = "--list" ] || [ "${1:-}" = "-l" ]; then
+  mkdir -p "$CONTAINERS_DIR"
+  echo "📦 Codex Boxes in ~/.codex-containers:"
+  echo ""
+
+  boxes=("$CONTAINERS_DIR"/*)
+  if [ ! -e "${boxes[0]}" ]; then
+    echo "  (No boxes created yet. Create one with: $CMD add <name>)"
+    exit 0
+  fi
+
+  printf "  %-20s %-18s %s\n" "BOX NAME" "STATUS" "STORAGE LOCATION"
+  printf "  %-20s %-18s %s\n" "────────" "──────" "────────────────"
+
+  for dir in "$CONTAINERS_DIR"/*; do
+    if [ -d "$dir" ]; then
+      name=$(basename "$dir")
+      status="Ready"
+      if [ -f "$dir/.codex/auth.json" ] || [ -f "$dir/auth.json" ]; then
+        status="Authenticated"
+      elif [ -f "$dir/.codex/config.toml" ] || [ -f "$dir/config.toml" ]; then
+        status="Configured"
+      elif [ -d "$dir/.codex" ]; then
+        status="Initialized"
+      fi
+      printf "  %-20s %-18s %s\n" "$name" "$status" "$dir"
+    fi
+  done
+  echo ""
+  echo "Usage:"
+  echo "  $CMD add <box-name>     Create a new box"
+  echo "  $CMD <box-name> [args]  Launch an existing box"
+  exit 0
+fi
+
+# Handle Subcommands: rm / delete / remove
+if [ "${1:-}" = "rm" ] || [ "${1:-}" = "delete" ] || [ "${1:-}" = "remove" ]; then
+  if [ $# -lt 2 ]; then
+    echo "Usage: $CMD rm <box-name>" >&2
+    exit 1
+  fi
+  TARGET="$CONTAINERS_DIR/$2"
+  if [ -d "$TARGET" ]; then
+    rm -rf "$TARGET"
+    echo "🗑️  Removed box '$2' ($TARGET)"
+  else
+    echo "Box '$2' does not exist." >&2
+  fi
+  exit 0
+fi
+
+# Handle Subcommand: login
+if [ "${1:-}" = "login" ]; then
+  if [ $# -lt 2 ]; then
+    echo "Usage: $CMD login <box-name>" >&2
+    exit 1
+  fi
+  BOX_TARGET="$2"
+  shift 2 || true
+  exec "$0" "$BOX_TARGET" login "$@"
+fi
+
+# Handle Help
+if [ $# -lt 1 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ] || [ "$1" = "help" ]; then
+  cat << HELP
+Usage:
+  $CMD add <box-name>         Create a new box profile
+  $CMD <box-name> [options]   Launch an existing box
+  $CMD list                   List all active boxes
+  $CMD rm <box-name>          Delete a box profile
+
+Examples:
+  $CMD add dev
+  $CMD dev
+  $CMD dev status
+  $CMD list
+
+HELP
+  exit 0
+fi
+
+ACCOUNT="$1"
+shift || true
+
+PROFILE_DIR="$CONTAINERS_DIR/$ACCOUNT"
+if [ ! -d "$PROFILE_DIR" ]; then
+  echo "Error: Box '$ACCOUNT' does not exist." >&2
+  echo "To create this box, run: $CMD add $ACCOUNT" >&2
+  exit 1
+fi
+
+mkdir -p "$PROFILE_DIR/.codex" "$PROFILE_DIR/tmp" "$HOME/.local/state/openusage"
+chmod 1777 "$PROFILE_DIR/tmp" 2>/dev/null || true
+
+# Re-sync global skills and rules into the box on every launch
+for src in skills rules; do
+  if [ -d "$HOME/.codex/$src" ]; then
+    mkdir -p "$PROFILE_DIR/.codex/$src"
+    cp -ru "$HOME/.codex/$src"/. "$PROFILE_DIR/.codex/$src/" 2>/dev/null || true
+  fi
+done
+if [ -f "$HOME/.config/agents/AGENTS.md" ]; then
+  ln -sf "$HOME/.config/agents/AGENTS.md" "$PROFILE_DIR/.codex/AGENTS.md"
+elif [ -f "$HOME/.codex/AGENTS.md" ]; then
+  cp -u "$HOME/.codex/AGENTS.md" "$PROFILE_DIR/.codex/AGENTS.md" 2>/dev/null || true
+fi
+if [ -f "$HOME/.codex/hooks.json" ]; then
+  # Nested box: $HOME/.codex is already this profile (same inode); GNU cp errors.
+  if [ ! "$HOME/.codex/hooks.json" -ef "$PROFILE_DIR/.codex/hooks.json" ]; then
+    cp -u "$HOME/.codex/hooks.json" "$PROFILE_DIR/.codex/hooks.json"
+  fi
+fi
+
+# Prefer an explicit BWRAP_BIN (tests), then distro bwrap: on Ubuntu 24.04+
+# Homebrew bwrap lacks the AppArmor profile and fails with
+# "setting up uid map: Permission denied".
+if [ -n "${BWRAP_BIN:-}" ] && [ -x "$BWRAP_BIN" ]; then
+  :
+elif [ -x /usr/bin/bwrap ]; then
+  BWRAP_BIN=/usr/bin/bwrap
+elif BWRAP_BIN=$(command -v bwrap 2>/dev/null) && [ -n "$BWRAP_BIN" ]; then
+  :
+elif [ -x /home/linuxbrew/.linuxbrew/bin/bwrap ]; then
+  BWRAP_BIN=/home/linuxbrew/.linuxbrew/bin/bwrap
+else
+  echo "Error: bubblewrap (bwrap) not found." >&2
+  exit 1
+fi
+if [ ! -x "$BWRAP_BIN" ]; then
+  echo "Error: bubblewrap (bwrap) not found." >&2
+  exit 1
+fi
+
+if [ -n "${CODEX_BIN:-}" ] && [ -x "$CODEX_BIN" ]; then
+  :
+elif CODEX_BIN=$(command -v codex 2>/dev/null) && [ -n "$CODEX_BIN" ] && [ -x "$CODEX_BIN" ]; then
+  :
+elif [ -x "$HOME/.local/bin/codex" ]; then
+  CODEX_BIN="$HOME/.local/bin/codex"
+elif NVM_CODEX=$(find "$HOME/.nvm/versions/node" -maxdepth 3 -name codex -type f -perm /111 2>/dev/null | sort -V | tail -n 1) && [ -n "$NVM_CODEX" ] && [ -x "$NVM_CODEX" ]; then
+  CODEX_BIN="$NVM_CODEX"
+else
+  echo "Error: Codex CLI not found in PATH, ~/.local/bin/codex, or NVM." >&2
+  exit 1
+fi
+
+RUNTIME_BIND=()
+if [ -n "${XDG_RUNTIME_DIR:-}" ] && [ -d "$XDG_RUNTIME_DIR" ]; then
+  RUNTIME_BIND=(--bind "$XDG_RUNTIME_DIR" "$XDG_RUNTIME_DIR")
+elif [ -d "/run/user/$(id -u)" ]; then
+  RUNTIME_BIND=(--bind "/run/user/$(id -u)" "/run/user/$(id -u)")
+fi
+
+RENAME_BRIDGE_PID=""
+RENAME_SOCKET_INNER=""
+TMUX_PANE_VALUE="$(printenv TMUX_PANE 2>/dev/null || true)"
+if [ -n "$TMUX_PANE_VALUE" ]; then
+  WINDOW_ID="$(tmux display-message -p -t "$TMUX_PANE_VALUE" '#{window_id}' 2>/dev/null || true)"
+  if [ -n "$WINDOW_ID" ]; then
+    SOCKET_NAME="codex-box-rename-$BASHPID.sock"
+    # /tmp is visible to Codex workspace-write; ~/.codex-containers is not.
+    RENAME_SOCKET_HOST="/tmp/$SOCKET_NAME"
+    RENAME_SOCKET_INNER="$RENAME_SOCKET_HOST"
+    "$HOME/.local/bin/codex-box-rename-bridge" "$RENAME_SOCKET_HOST" "$WINDOW_ID" "$TMUX_PANE_VALUE" &
+    RENAME_BRIDGE_PID=$!
+    for attempt in {1..50}; do
+      if [ -S "$RENAME_SOCKET_HOST" ]; then
+        break
+      fi
+      sleep 0.02
+    done
+    if [ ! -S "$RENAME_SOCKET_HOST" ]; then
+      echo "Warning: Workmux relay did not start; automatic window updates unavailable." >&2
+      kill "$RENAME_BRIDGE_PID" 2>/dev/null || true
+      wait "$RENAME_BRIDGE_PID" 2>/dev/null || true
+      RENAME_BRIDGE_PID=""
+      RENAME_SOCKET_INNER=""
+    fi
+  fi
+fi
+
+cleanup_rename_bridge() {
+  if [ -n "$RENAME_BRIDGE_PID" ]; then
+    kill "$RENAME_BRIDGE_PID" 2>/dev/null || true
+    wait "$RENAME_BRIDGE_PID" 2>/dev/null || true
+  fi
+}
+trap cleanup_rename_bridge EXIT
+
+if [ -n "${TMUX_PANE:-}" ] && [ -z "${WORKMUX_DISABLE_SET_WINDOW_STATUS:-}" ]; then
+  workmux register-agent >/dev/null 2>&1 || true
+fi
+
+"$BWRAP_BIN" \
+  --ro-bind / / \
+  --dev /dev \
+  --proc /proc \
+  --bind /tmp /tmp \
+  --ro-bind-try /tmp/.X11-unix /tmp/.X11-unix \
+  --bind "$HOME" "$HOME" \
+  "${RUNTIME_BIND[@]}" \
+  --bind "$PROFILE_DIR/.codex" "$HOME/.codex" \
+  --bind "$HOME/.local/state/openusage" "$HOME/.local/state/openusage" \
+  --setenv HOME "$HOME" \
+  --setenv CODEX_ACCOUNT "$ACCOUNT" \
+  --setenv CODEX_BOX_RENAME_SOCKET "$RENAME_SOCKET_INNER" \
+  --chdir "$PWD" \
+  "$CODEX_BIN" --no-alt-screen "$@"

@@ -23,7 +23,7 @@ git clone --depth 1 https://github.com/gpakosz/.tmux.git ~/.tmux-omt
 ln -sf ~/.tmux-omt/.tmux.conf ~/.tmux.conf
 
 # 3. drop this repo's local config into home
-ln -sf ~/.config/vsvimsettings/tmux/.tmux.conf.local ~/.tmux.conf.local
+python3 ~/vsvimsettings/scripts/install.py
 
 # 4. start tmux, install plugins
 tmux

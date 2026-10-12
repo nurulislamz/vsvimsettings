@@ -1,0 +1,216 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# agy-box: Lightweight Container Runner for Multi-Account Antigravity
+# ==============================================================================
+set -euo pipefail
+
+CONTAINERS_DIR="$HOME/.agy-containers"
+CMD="$(basename "$0")"
+
+# Handle Subcommands: add / new / create
+if [ "${1:-}" = "add" ] || [ "${1:-}" = "new" ] || [ "${1:-}" = "create" ]; then
+  if [ $# -lt 2 ] || [ -z "${2:-}" ]; then
+    echo "Usage: $CMD add <box-name>" >&2
+    exit 1
+  fi
+  BOX_NAME="$2"
+  if [[ "$BOX_NAME" =~ ^- ]]; then
+    echo "Error: Invalid box name '$BOX_NAME'" >&2
+    exit 1
+  fi
+  PROFILE_DIR="$CONTAINERS_DIR/$BOX_NAME"
+  if [ -d "$PROFILE_DIR" ]; then
+    echo "Box '$BOX_NAME' already exists ($PROFILE_DIR)."
+    exit 0
+  fi
+
+  mkdir -p "$PROFILE_DIR/.gemini/antigravity-cli" \
+           "$PROFILE_DIR/.gemini/config/workflows" \
+           "$PROFILE_DIR/.gemini/config/global_workflows" \
+           "$PROFILE_DIR/.gemini/config/skills" \
+           "$PROFILE_DIR/.gemini/config/agents" \
+           "$PROFILE_DIR/.gemini/config/rules" \
+           "$HOME/.local/state/openusage"
+
+
+  # Sync global workflows, skills, agents, and rules if available on host
+  for src in workflows global_workflows skills agents rules; do
+    if [ -d "$HOME/.gemini/config/$src" ]; then
+      mkdir -p "$PROFILE_DIR/.gemini/config/$src"
+      cp -rn "$HOME/.gemini/config/$src"/. "$PROFILE_DIR/.gemini/config/$src/" 2>/dev/null || true
+    fi
+  done
+  if [ -d "$HOME/.gemini/antigravity-cli/builtin" ]; then
+    mkdir -p "$PROFILE_DIR/.gemini/antigravity-cli/builtin"
+    cp -rn "$HOME/.gemini/antigravity-cli/builtin"/. "$PROFILE_DIR/.gemini/antigravity-cli/builtin/" 2>/dev/null || true
+  fi
+  if [ -f "$HOME/.config/agents/AGENTS.md" ]; then
+    mkdir -p "$PROFILE_DIR/.gemini/config/rules"
+    ln -sf "$HOME/.config/agents/AGENTS.md" "$PROFILE_DIR/.gemini/config/rules/session-tasks.md"
+  fi
+
+  echo "✨ Created Antigravity box '$BOX_NAME' in $PROFILE_DIR"
+  echo "Launch with: $CMD $BOX_NAME"
+  exit 0
+fi
+
+# Handle Subcommands: list / ls
+if [ "${1:-}" = "list" ] || [ "${1:-}" = "ls" ]; then
+  mkdir -p "$CONTAINERS_DIR"
+  echo "📦 Antigravity Boxes in ~/.agy-containers:"
+  echo ""
+
+  boxes=("$CONTAINERS_DIR"/*)
+  if [ ! -e "${boxes[0]}" ]; then
+    echo "  (No boxes created yet. Create one with: $CMD add <name>)"
+    exit 0
+  fi
+
+  printf "  %-20s %-18s %s\n" "BOX NAME" "STATUS" "STORAGE LOCATION"
+  printf "  %-20s %-18s %s\n" "────────" "──────" "────────────────"
+
+  for dir in "$CONTAINERS_DIR"/*; do
+    if [ -d "$dir" ]; then
+      name=$(basename "$dir")
+      status="Ready"
+      if [ -f "$dir/.gemini/oauth_creds.json" ] || [ -f "$dir/.gemini/gemini-credentials.json" ] || [ -f "$dir/.gemini/antigravity-cli/antigravity-oauth-token" ]; then
+        status="Authenticated"
+      elif [ -d "$dir/.gemini/antigravity-cli" ]; then
+        status="Initialized"
+      fi
+      printf "  %-20s %-18s %s\n" "$name" "$status" "$dir"
+    fi
+  done
+  echo ""
+  echo "Usage:"
+  echo "  $CMD add <box-name>     Create a new box"
+  echo "  $CMD <box-name> [args]  Launch an existing box"
+  exit 0
+fi
+
+# Handle Subcommands: rm / delete / remove
+if [ "${1:-}" = "rm" ] || [ "${1:-}" = "delete" ] || [ "${1:-}" = "remove" ]; then
+  if [ $# -lt 2 ]; then
+    echo "Usage: $CMD rm <box-name>" >&2
+    exit 1
+  fi
+  TARGET="$CONTAINERS_DIR/$2"
+  if [ -d "$TARGET" ]; then
+    rm -rf "$TARGET"
+    echo "🗑️  Removed box '$2' ($TARGET)"
+  else
+    echo "Box '$2' does not exist." >&2
+  fi
+  exit 0
+fi
+
+# Handle Help
+if [ $# -lt 1 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ] || [ "$1" = "help" ]; then
+  cat << HELP
+Usage:
+  $CMD add <box-name>         Create a new box profile
+  $CMD <box-name> [options]   Launch an existing box
+  $CMD list                   List all active boxes
+  $CMD rm <box-name>          Delete a box profile
+
+Examples:
+  $CMD add nurulz
+  $CMD nurulz
+  $CMD nurulz -p ping
+  $CMD list
+
+HELP
+  exit 0
+fi
+
+ACCOUNT="$1"
+shift || true
+
+PROFILE_DIR="$CONTAINERS_DIR/$ACCOUNT"
+if [ ! -d "$PROFILE_DIR" ]; then
+  echo "Error: Box '$ACCOUNT' does not exist." >&2
+  echo "To create this box, run: $CMD add $ACCOUNT" >&2
+  exit 1
+fi
+
+mkdir -p "$PROFILE_DIR/.gemini/antigravity-cli" "$HOME/.local/state/openusage"
+
+
+# Sync Workmux's official lifecycle hook group, preserving profile hooks.
+if [ -f "$HOME/.gemini/config/hooks.json" ]; then
+  python3 - "$HOME/.gemini/config/hooks.json" "$PROFILE_DIR/.gemini/config/hooks.json" <<'WORKMUX_HOOK_SYNC'
+import json
+import pathlib
+import sys
+source = json.loads(pathlib.Path(sys.argv[1]).read_text())
+path = pathlib.Path(sys.argv[2])
+if "workmux-status" in source:
+    profile = json.loads(path.read_text()) if path.exists() else {}
+    profile["workmux-status"] = source["workmux-status"]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(profile, indent=2) + "\n")
+WORKMUX_HOOK_SYNC
+fi
+
+# Re-sync global skills, workflows, agents, and rules into the box on every launch
+for src in workflows global_workflows skills agents rules; do
+  if [ -d "$HOME/.gemini/config/$src" ]; then
+    mkdir -p "$PROFILE_DIR/.gemini/config/$src"
+    cp -ru "$HOME/.gemini/config/$src"/. "$PROFILE_DIR/.gemini/config/$src/" 2>/dev/null || true
+  fi
+done
+if [ -d "$HOME/.gemini/antigravity-cli/builtin" ]; then
+  mkdir -p "$PROFILE_DIR/.gemini/antigravity-cli/builtin"
+  cp -ru "$HOME/.gemini/antigravity-cli/builtin"/. "$PROFILE_DIR/.gemini/antigravity-cli/builtin/" 2>/dev/null || true
+fi
+if [ -f "$HOME/.config/agents/AGENTS.md" ]; then
+  mkdir -p "$PROFILE_DIR/.gemini/config/rules"
+  ln -sf "$HOME/.config/agents/AGENTS.md" "$PROFILE_DIR/.gemini/config/rules/session-tasks.md"
+fi
+
+# Prefer an explicit BWRAP_BIN (tests), then distro bwrap: on Ubuntu 24.04+
+# Homebrew bwrap lacks the AppArmor profile and fails with
+# "setting up uid map: Permission denied".
+if [ -n "${BWRAP_BIN:-}" ] && [ -x "$BWRAP_BIN" ]; then
+  :
+elif [ -x /usr/bin/bwrap ]; then
+  BWRAP_BIN=/usr/bin/bwrap
+elif BWRAP_BIN=$(command -v bwrap 2>/dev/null) && [ -n "$BWRAP_BIN" ]; then
+  :
+elif [ -x /home/linuxbrew/.linuxbrew/bin/bwrap ]; then
+  BWRAP_BIN=/home/linuxbrew/.linuxbrew/bin/bwrap
+else
+  echo "Error: bubblewrap (bwrap) not found." >&2
+  exit 1
+fi
+if [ ! -x "$BWRAP_BIN" ]; then
+  echo "Error: bubblewrap (bwrap) not found." >&2
+  exit 1
+fi
+
+# nvim and tmux put sockets in XDG_RUNTIME_DIR (/run/user/UID). --ro-bind / /
+# would make that path read-only and break both.
+RUNTIME_BIND=()
+if [ -n "${XDG_RUNTIME_DIR:-}" ] && [ -d "$XDG_RUNTIME_DIR" ]; then
+  RUNTIME_BIND=(--bind "$XDG_RUNTIME_DIR" "$XDG_RUNTIME_DIR")
+elif [ -d "/run/user/$(id -u)" ]; then
+  RUNTIME_BIND=(--bind "/run/user/$(id -u)" "/run/user/$(id -u)")
+fi
+
+if [ -n "${TMUX_PANE:-}" ] && [ -z "${WORKMUX_DISABLE_SET_WINDOW_STATUS:-}" ]; then
+  workmux register-agent >/dev/null 2>&1 || true
+fi
+
+exec "$BWRAP_BIN" \
+  --ro-bind / / \
+  --dev-bind /dev /dev \
+  --proc /proc \
+  --bind /tmp /tmp \
+  --bind "$HOME" "$HOME" \
+  "${RUNTIME_BIND[@]}" \
+  --bind "$PROFILE_DIR/.gemini" "$HOME/.gemini" \
+  --bind "$HOME/.local/state/openusage" "$HOME/.local/state/openusage" \
+  --setenv HOME "$HOME" \
+  --setenv AGY_ACCOUNT "$ACCOUNT" \
+  --chdir "$PWD" \
+  agy --dangerously-skip-permissions "$@"

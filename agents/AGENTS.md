@@ -32,6 +32,10 @@ Never cut: validation at trust boundaries, error handling that prevents data los
 - Say "I don't know" when uncertain. Push back with technical reasons when you disagree. Never be sycophantic.
 - Deliver responses in ultra-terse prose with maximal technical density. Strip conversational filler, greetings, pleasantries, introductory remarks, and meta-explanation to conserve context tokens.
 
+## Dotfiles source
+
+`~/vsvimsettings` is the source for these rules, the workmux skill, agent hooks, workmux config and Neovim. Installed paths link here or merge the tracked hook templates. Edit and commit the source; restore with `python3 ~/vsvimsettings/scripts/install.py`. Keep credentials, sessions, caches and task logs outside the repo.
+
 ## Worktrees
 
 Always place git worktrees under `.worktrees/` (e.g., `.worktrees/<feature-name>`), never under `.claude/worktrees/` or other paths.
