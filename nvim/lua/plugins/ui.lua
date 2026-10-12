@@ -12,7 +12,7 @@ return {
   },
   {
     "nvim-lualine/lualine.nvim",
-    dependencies = { "nvim-tree/nvim-web-devicons" },
+    dependencies = { "nvim-mini/mini.nvim" },
     opts = {
       sections = {
         lualine_c = {
@@ -78,11 +78,11 @@ return {
     dependencies = { "MunifTanjim/nui.nvim" },
     config = function()
       require("noice").setup({
-        lsp = { 
-          override = { 
+        lsp = {
+          progress = { enabled = false },
+          override = {
             ["vim.lsp.util.convert_input_to_markdown_lines"] = true, 
             ["vim.lsp.util.stylize_markdown"] = true, 
-            ["cmp.entry.get_documentation"] = true,
           } 
         },
         -- Route common messages to 'mini' (bottom right) instead of a popup

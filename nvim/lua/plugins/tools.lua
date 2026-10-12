@@ -28,7 +28,7 @@ return {
       { "<leader>cd", "<cmd>CodeDiff<cr>", desc = "Open CodeDiff" },
     },
   },
-  { "lewis6991/gitsigns.nvim", config = true },
+  { "lewis6991/gitsigns.nvim", opts = { current_line_blame = true } },
   {
     "stevearc/conform.nvim",
     opts = {

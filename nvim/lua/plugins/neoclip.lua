@@ -17,7 +17,7 @@ return {
       keys = {
         telescope = {
           i = {
-            -- Enter/Tab paste (like cmp confirm); Ctrl-y only sets the register
+            -- Enter/Tab paste (like completion confirm); Ctrl-y only sets the register
             paste = { "<cr>", "<tab>" },
             select = "<c-y>",
           },

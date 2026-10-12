@@ -3,7 +3,7 @@ return {
   lazy = false,
   dependencies = {
     "nvim-treesitter/nvim-treesitter",
-    "nvim-tree/nvim-web-devicons",
+    "nvim-mini/mini.nvim",
     "gunasekar/markview-smart-tables.nvim",
   },
   opts = function()

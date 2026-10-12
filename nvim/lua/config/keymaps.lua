@@ -7,6 +7,41 @@ end
 -- Clear search highlights with Esc or <leader>nh
 map("n", "<Esc>", "<cmd>nohlsearch<CR>", { desc = "Clear search highlights" })
 map("n", "<leader>nh", "<cmd>nohlsearch<CR>", { desc = "Clear search highlights" })
+map("n", "n", "nzzzv<cmd>lua require('hlslens').start()<cr>", { desc = "Next search result centered" })
+map("n", "N", "Nzzzv<cmd>lua require('hlslens').start()<cr>", { desc = "Previous search result centered" })
+map("n", "*", "*<cmd>lua require('hlslens').start()<cr>", { desc = "Search word forward" })
+map("n", "#", "#<cmd>lua require('hlslens').start()<cr>", { desc = "Search word backward" })
+map("n", "g*", "g*<cmd>lua require('hlslens').start()<cr>", { desc = "Search word forward (partial)" })
+map("n", "g#", "g#<cmd>lua require('hlslens').start()<cr>", { desc = "Search word backward (partial)" })
+map("n", "U", "<C-r>", { desc = "Redo" })
+
+local function copy_context()
+    local path = vim.fn.expand("%:.")
+    if path == "" then
+        vim.notify("Current buffer has no file path", vim.log.levels.WARN)
+        return
+    end
+
+    local first, last = vim.fn.line("."), vim.fn.line(".")
+    local mode = vim.fn.mode()
+    if mode == "v" or mode == "V" or mode == "\22" then
+        first, last = vim.fn.line("v"), vim.fn.line(".")
+        if first > last then first, last = last, first end
+    end
+    local location = path .. ":L" .. first .. (first == last and "" or "-L" .. last)
+
+    vim.ui.input({ prompt = "Optional note: " }, function(note)
+        vim.fn.setreg("+", location .. (note and note:match("%S") and "\n\n" .. note or ""))
+        vim.notify("Copied " .. location, vim.log.levels.INFO)
+    end)
+end
+map({ "n", "x" }, "<leader>cp", copy_context, { desc = "Copy file location and note" })
+map("n", "<leader>so", function()
+    local config_dir = vim.fn.stdpath("config")
+    local current = vim.fn.expand("%:p")
+    if current:sub(1, #config_dir + 1) == config_dir .. "/" then vim.cmd("update") end
+    vim.cmd("source " .. vim.fn.fnameescape(config_dir .. "/init.lua"))
+end, { desc = "Save and reload Neovim config" })
 
 do
     local snacks = require("snacks")
@@ -270,7 +305,7 @@ do
     end, { desc = "Toggle Menu (All States)" })
 
     -- Snacks Pickers
-    map("n", "<leader>ff", function() snacks.picker.smart({ hidden = true }) end, { desc = "Smart find files (all)" })
+    map("n", "<leader>ff", function() require("fff").find_files() end, { desc = "Find files (FFF)" })
     map("n", "<leader>fr", function() snacks.picker.recent() end, { desc = "Fuzzy find recent files" })
     map("n", "<leader>fs", function() snacks.picker.grep() end, { desc = "Find string in CWD" })
     map("n", "<leader>fc", function() snacks.picker.grep_word() end, { desc = "Find word under cursor" })
@@ -391,7 +426,7 @@ do
 
     map("n", "K", vim.lsp.buf.hover, { desc = "Hover Documentation" })
     map("n", "<leader>rn", rename_symbol, { expr = true, desc = "Rename Symbol" })
-    map({ "n", "x" }, "ga", vim.lsp.buf.code_action, { desc = "Code Action" })
+    map({ "n", "x" }, "ga", function() require("tiny-code-action").code_action() end, { desc = "Code Action" })
     map("n", "gl", vim.diagnostic.open_float, { desc = "Show Line Diagnostics" })
     map("n", "]d", vim.diagnostic.goto_next, { desc = "Next Diagnostic" })
     map("n", "[d", vim.diagnostic.goto_prev, { desc = "Prev Diagnostic" })
@@ -418,6 +453,17 @@ do
                 end)
             end,
         })
+
+        -- Watchers only reload the current tab; poll clean buffers for missed changes.
+        if vim.g.disk_reload_timer then vim.fn.timer_stop(vim.g.disk_reload_timer) end
+        vim.g.disk_reload_timer = vim.fn.timer_start(1000, function()
+            if vim.fn.mode() == "c" or vim.fn.getcmdwintype() ~= "" then return end
+            for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+                if vim.api.nvim_buf_is_loaded(buf) and not vim.bo[buf].modified then
+                    check_buffer_time(buf)
+                end
+            end
+        end, { ["repeat"] = -1 })
 
         -- Coalesce Pyright refreshes when several external edits reload together.
         local reload_seq = 0

@@ -1,9 +1,32 @@
 return {
+  {
+    "nvim-mini/mini.nvim",
+    lazy = false,
+    config = function()
+      require("mini.ai").setup()
+      require("mini.pairs").setup()
+      require("mini.surround").setup()
+      require("mini.jump").setup()
+      require("mini.icons").setup()
+      require("mini.icons").mock_nvim_web_devicons()
+    end,
+  },
+  {
+    "dmtrKovalenko/fff.nvim",
+    lazy = false,
+    build = function() require("fff.download").download_or_build_binary() end,
+    opts = { lazy_sync = true },
+  },
   { 
     "nvim-telescope/telescope.nvim", 
     lazy = false,
     branch = "0.1.x", 
-    dependencies = { "nvim-lua/plenary.nvim" },
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
+      "nvim-telescope/telescope-ui-select.nvim",
+      { "nvim-telescope/telescope-frecency.nvim", version = "^1.0.0" },
+    },
     config = function()
       local telescope = require("telescope")
       local actions = require("telescope.actions")
@@ -72,7 +95,37 @@ return {
             },
           },
         },
+        extensions = {
+          fzf = {
+            fuzzy = true,
+            override_generic_sorter = true,
+            override_file_sorter = true,
+            case_mode = "smart_case",
+          },
+          frecency = {},
+          ["ui-select"] = require("telescope.themes").get_dropdown({}),
+        },
       })
+
+      telescope.load_extension("fzf")
+      telescope.load_extension("ui-select")
+      telescope.load_extension("frecency")
+
+      local function project_root()
+        return vim.fs.root(0, { ".git" }) or vim.fn.getcwd()
+      end
+      vim.keymap.set("n", "<leader>sf", function()
+        telescope.extensions.frecency.frecency({ cwd = project_root(), workspace = "CWD", hidden = true })
+      end, { desc = "Find frecent files" })
+      vim.keymap.set("n", "<leader>sF", function()
+        require("telescope.builtin").find_files({ cwd = project_root() })
+      end, { desc = "Find all files (Telescope)" })
+      vim.keymap.set("n", "<leader>sg", function()
+        require("telescope.builtin").live_grep({ cwd = project_root() })
+      end, { desc = "Live grep (Telescope)" })
+      vim.keymap.set("n", "<leader>sd", function()
+        require("telescope.builtin").diagnostics()
+      end, { desc = "Search diagnostics" })
     end
   },
   { 
@@ -85,6 +138,17 @@ return {
           "c",
           "cpp",
           "c_sharp",
+          "bash",
+          "css",
+          "diff",
+          "graphql",
+          "javascript",
+          "jsdoc",
+          "json",
+          "json5",
+          "query",
+          "tsx",
+          "typescript",
           "go",
           "gomod",
           "gosum",
@@ -131,24 +195,49 @@ return {
       end,
     },
   },
-  { "windwp/nvim-autopairs", lazy = false, event = "InsertEnter", config = true },
   { "numToStr/Comment.nvim", opts = {}, lazy = false },
-  { 
-    "folke/flash.nvim", 
-    event = "VeryLazy", 
-    opts = {}, 
-    keys = { { "s", mode = { "n", "x", "o" }, function() require("flash").jump() end, desc = "Flash Jump" } } 
-  },
   { 
     "folke/trouble.nvim", 
     lazy = false,
-    dependencies = { "nvim-tree/nvim-web-devicons" }, 
+    dependencies = { "nvim-mini/mini.nvim" },
     opts = {} 
   },
+  { "kevinhwang91/nvim-hlslens", event = "VeryLazy", opts = {} },
+  { "m4xshen/smartcolumn.nvim", opts = {} },
   {
-    "kylechui/nvim-surround",
-    version = "^3.0.0",
+    "windwp/nvim-ts-autotag",
+    dependencies = { "nvim-treesitter/nvim-treesitter" },
+    event = { "BufReadPre", "BufNewFile" },
+    opts = {},
+  },
+  {
+    "Wansmer/treesj",
+    keys = {
+      { "<leader>tj", function() require("treesj").toggle() end, desc = "Toggle node layout" },
+    },
+    opts = { use_default_keymaps = false },
+  },
+  {
+    "abecodes/tabout.nvim",
+    dependencies = { "nvim-treesitter/nvim-treesitter", "L3MON4D3/LuaSnip" },
+    event = "InsertCharPre",
+    opts = { tabkey = "", backwards_tabkey = "" },
+  },
+  {
+    "stevearc/quicker.nvim",
+    ft = "qf",
+    keys = {
+      { "<leader>fq", function() require("quicker").toggle() end, desc = "Toggle quickfix" },
+      { "<leader>fQ", function() require("quicker").toggle({ loclist = true }) end, desc = "Toggle location list" },
+    },
+    opts = {},
+  },
+  {
+    "chrisgrieser/nvim-chainsaw",
     event = "VeryLazy",
+    keys = {
+      { "<leader>lg", function() require("chainsaw").variableLog() end, desc = "Log variable" },
+    },
     opts = {},
   },
 }

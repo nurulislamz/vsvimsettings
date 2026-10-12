@@ -3,6 +3,7 @@ return {
     "stevearc/oil.nvim",
     lazy = false,
     opts = {
+      watch_for_changes = true,
       default_file_explorer = true,
       delete_to_trash = true,
       skip_confirm_for_simple_edits = true,
@@ -18,7 +19,7 @@ return {
       },
       win_options = {
         wrap = false,
-        signcolumn = "no",
+        signcolumn = "yes:2",
         cursorcolumn = false,
         foldcolumn = "0",
         spell = false,
@@ -30,5 +31,10 @@ return {
     keys = {
       { "-", "<cmd>Oil<cr>", desc = "Open parent directory (Oil)" },
     },
+  },
+  {
+    "refractalize/oil-git-status.nvim",
+    dependencies = { "stevearc/oil.nvim" },
+    opts = { show_ignored = false },
   },
 }

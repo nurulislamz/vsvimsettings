@@ -1,4 +1,14 @@
 return {
+    { "mason-org/mason.nvim", opts = {} },
+    {
+        "WhoIsSethDaniel/mason-tool-installer.nvim",
+        dependencies = { "mason-org/mason.nvim" },
+        opts = {
+            ensure_installed = { "stylua", "gofumpt", "goimports", "clang-format", "prettier" },
+            start_delay = 3000,
+        },
+    },
+    { "j-hui/fidget.nvim", event = "LspAttach", opts = {} },
     {
         "folke/lazydev.nvim",
         ft = "lua",
@@ -8,24 +18,82 @@ return {
             },
         },
     },
-    -- 1. LSPCONFIG & AUTOCOMPLETE
+    {
+        "saghen/blink.cmp",
+        version = "1.*",
+        dependencies = {
+            "L3MON4D3/LuaSnip",
+            "rafamadriz/friendly-snippets",
+            { "mikavilpas/blink-ripgrep.nvim", version = "*" },
+        },
+        opts = {
+            keymap = {
+                preset = "default",
+                ["<C-Space>"] = { "show" },
+                ["<Tab>"] = {
+                    function(blink)
+                        if vim.g.ai_neocursor then
+                            local ok, neocursor = pcall(require, "neocursor")
+                            if ok and neocursor.accept and neocursor.accept() then return true end
+                        elseif vim.g.ai_copilot then
+                            local ok, suggestion = pcall(require, "copilot.suggestion")
+                            if ok and suggestion.is_visible() then
+                                suggestion.accept()
+                                return true
+                            end
+                        end
+                        return blink.select_and_accept()
+                    end,
+                    "snippet_forward",
+                    function() return "<Plug>(Tabout)" end,
+                    "fallback",
+                },
+                ["<CR>"] = { "select_and_accept", "fallback" },
+            },
+            snippets = { preset = "luasnip" },
+            sources = {
+                default = { "lazydev", "lsp", "snippets", "buffer", "path", "ripgrep" },
+                providers = {
+                    ripgrep = {
+                        module = "blink-ripgrep",
+                        name = "Ripgrep",
+                        opts = {},
+                    },
+                    lazydev = {
+                        name = "LazyDev",
+                        module = "lazydev.integrations.blink",
+                        score_offset = 100,
+                    },
+                },
+            },
+            completion = {
+                menu = { auto_show = true },
+                documentation = { auto_show = true, auto_show_delay_ms = 500 },
+            },
+            signature = { enabled = true },
+            cmdline = {
+                keymap = { preset = "cmdline" },
+                sources = function()
+                    local cmdtype = vim.fn.getcmdtype()
+                    if cmdtype == "/" or cmdtype == "?" then return { "buffer" } end
+                    if cmdtype == ":" then return { "path", "cmdline" } end
+                    return {}
+                end,
+            },
+        },
+    },
+    -- LSPCONFIG
     {
         "neovim/nvim-lspconfig",
         dependencies = {
             "mason-org/mason.nvim",
             "mason-org/mason-lspconfig.nvim",
-            "hrsh7th/nvim-cmp",
-            "hrsh7th/cmp-nvim-lsp",
-            "hrsh7th/cmp-buffer",
-            "hrsh7th/cmp-path",
-            "hrsh7th/cmp-cmdline",
-            "L3MON4D3/LuaSnip",
-            "saadparwaiz1/cmp_luasnip",
+            "saghen/blink.cmp",
+            "b0o/schemastore.nvim",
+            "artemave/workspace-diagnostics.nvim",
         },
         config = function()
-            require("mason").setup()
-
-            local capabilities = require("cmp_nvim_lsp").default_capabilities()
+            local capabilities = vim.lsp.protocol.make_client_capabilities()
             -- Neovim hardcodes didChangeWatchedFiles off on Linux (vim/lsp/protocol.lua),
             -- even though the inotify backend is available. Force it on so basedpyright
             -- sees file changes made outside nvim (agents, git) without a server restart.
@@ -41,6 +109,11 @@ return {
                 "clangd",
                 "rust_analyzer",
                 "basedpyright",
+                "jsonls",
+                "yamlls",
+                "eslint",
+                "tailwindcss",
+                "sqls",
             }
 
             require("mason-lspconfig").setup({
@@ -48,13 +121,22 @@ return {
                 automatic_enable = false,
             })
 
-            vim.lsp.config("*", { capabilities = capabilities })
+            vim.lsp.config("*", {
+                capabilities = capabilities,
+                on_attach = function(client, bufnr)
+                    if client:supports_method("workspace/diagnostic", bufnr) then
+                        vim.lsp.buf.workspace_diagnostics({ client_id = client.id })
+                    else
+                        require("workspace-diagnostics").populate_workspace_diagnostics(client, bufnr)
+                    end
+                end,
+            })
             vim.lsp.config("basedpyright", {
                 settings = {
                     basedpyright = {
                         analysis = {
                             autoSearchPaths = true,
-                            diagnosticMode = "openFilesOnly",
+                            diagnosticMode = "workspace",
                             useLibraryCodeForTypes = true,
                         },
                     },
@@ -70,80 +152,30 @@ return {
                     },
                 },
             })
+            vim.lsp.config("jsonls", {
+                settings = {
+                    json = {
+                        schemas = require("schemastore").json.schemas(),
+                        validate = { enable = true },
+                    },
+                },
+            })
+            vim.lsp.config("yamlls", {
+                settings = {
+                    yaml = {
+                        schemaStore = { enable = false, url = "" },
+                        schemas = require("schemastore").yaml.schemas(),
+                    },
+                },
+            })
 
             for _, server in ipairs(servers) do
                 vim.lsp.enable(server)
             end
 
-            -- Autocompletion Setup
-            local cmp = require("cmp")
-
-            -- AI (neocursor OR copilot) uses inline ghost text + Tab/CR accept.
-            -- nvim-cmp stays for LSP/snippets/buffer/path only.
-            local function accept_ai_or_cmp(fallback)
-                if vim.g.ai_neocursor then
-                    local ok, neocursor = pcall(require, "neocursor")
-                    if ok and neocursor.accept and neocursor.accept() then
-                        return
-                    end
-                elseif vim.g.ai_copilot then
-                    local ok, suggestion = pcall(require, "copilot.suggestion")
-                    if ok and suggestion.is_visible() then
-                        suggestion.accept()
-                        return
-                    end
-                end
-                if cmp.visible() then
-                    cmp.confirm({ select = true })
-                else
-                    fallback()
-                end
-            end
-
-            cmp.setup({
-                snippet = { expand = function(args) require("luasnip").lsp_expand(args.body) end },
-                mapping = cmp.mapping.preset.insert({
-                    ["<C-Space>"] = cmp.mapping.complete(),
-                    ["<Tab>"] = cmp.mapping(accept_ai_or_cmp, { "i", "s" }),
-                }),
-                sources = cmp.config.sources({
-                    { name = "lazydev", group_index = 0 },
-                    { name = "nvim_lsp" },
-                    { name = "luasnip" },
-                    { name = "buffer" },
-                    { name = "path" },
-                }),
-            })
-
-            -- Cmdline setup for "/" and "?"
-            cmp.setup.cmdline({ "/", "?" }, {
-                mapping = cmp.mapping.preset.cmdline(),
-                sources = { { name = "buffer" } }
-            })
-
-            -- Cmdline setup for ":"
-            cmp.setup.cmdline(":", {
-                mapping = cmp.mapping.preset.cmdline(),
-                sources = cmp.config.sources({
-                    { name = "path" }
-                }, {
-                    { name = "cmdline" }
-                }),
-                matching = {
-                    disallow_symbol_nonprefix_matching = false,
-                    disallow_fuzzy_matching = false,
-                    disallow_fullfuzzy_matching = false,
-                    disallow_partial_fuzzy_matching = false,
-                    disallow_prefix_unmatching = false,
-                },
-            })
-
             -- Diagnostic appearance & behavior
             vim.diagnostic.config({
-                virtual_text = {
-                    prefix = "● ",
-                    severity = { min = vim.diagnostic.severity.HINT },
-                },
+                virtual_text = false,
                 signs = {
                     text = {
                         [vim.diagnostic.severity.ERROR] = "✘",
@@ -165,5 +197,22 @@ return {
                 },
             })
         end
-    }
+    },
+    {
+        "rachartier/tiny-code-action.nvim",
+        event = "LspAttach",
+        dependencies = { "nvim-telescope/telescope.nvim" },
+        opts = { picker = "telescope" },
+    },
+    {
+        "rachartier/tiny-inline-diagnostic.nvim",
+        event = "VeryLazy",
+        priority = 1000,
+        opts = {
+            options = {
+                overflow = { mode = "wrap" },
+                override_open_float = true,
+            },
+        },
+    },
 }

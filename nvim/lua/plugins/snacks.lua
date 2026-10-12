@@ -12,16 +12,7 @@ return {
   "folke/snacks.nvim",
   priority = 1000,
   lazy = false,
-  dependencies = {
-    "nvim-mini/mini.icons",
-    specs = {
-      { "nvim-tree/nvim-web-devicons", enabled = false, optional = true },
-    },
-    config = function()
-      require("mini.icons").setup()
-      require("mini.icons").mock_nvim_web_devicons()
-    end,
-  },
+  dependencies = { "nvim-mini/mini.nvim" },
   opts = {
     dashboard = { enabled = true },
     notifier = { enabled = true, timeout = 3000 },
