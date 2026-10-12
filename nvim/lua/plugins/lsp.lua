@@ -90,7 +90,6 @@ return {
             "mason-org/mason-lspconfig.nvim",
             "saghen/blink.cmp",
             "b0o/schemastore.nvim",
-            "artemave/workspace-diagnostics.nvim",
         },
         config = function()
             local capabilities = vim.lsp.protocol.make_client_capabilities()
@@ -123,13 +122,13 @@ return {
 
             vim.lsp.config("*", {
                 capabilities = capabilities,
-                on_attach = function(client, bufnr)
-                    if client:supports_method("workspace/diagnostic", bufnr) then
-                        vim.lsp.buf.workspace_diagnostics({ client_id = client.id })
-                    else
-                        require("workspace-diagnostics").populate_workspace_diagnostics(client, bufnr)
-                    end
-                end,
+            })
+            vim.lsp.config("pyrefly", {
+                settings = {
+                    python = {
+                        pyrefly = { typeCheckingMode = "default" },
+                    },
+                },
             })
             vim.lsp.config("lua_ls", {
                 settings = {
