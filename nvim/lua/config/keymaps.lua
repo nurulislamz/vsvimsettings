@@ -427,6 +427,7 @@ do
     map("n", "K", vim.lsp.buf.hover, { desc = "Hover Documentation" })
     map("n", "<leader>rn", rename_symbol, { expr = true, desc = "Rename Symbol" })
     map({ "n", "x" }, "ga", function() require("tiny-code-action").code_action() end, { desc = "Code Action" })
+    map({ "n", "x", "i" }, "<C-.>", function() require("tiny-code-action").code_action() end, { desc = "Code Action" })
     map("n", "gl", vim.diagnostic.open_float, { desc = "Show Line Diagnostics" })
     map("n", "]d", vim.diagnostic.goto_next, { desc = "Next Diagnostic" })
     map("n", "[d", vim.diagnostic.goto_prev, { desc = "Prev Diagnostic" })
