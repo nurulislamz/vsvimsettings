@@ -86,61 +86,8 @@ end)
 -- Keybindings
 local act = wezterm.action
 
--- WSL/WSLg never gives Agent a real PNG (Win+Shift+S arrives as BMP, and
--- WezTerm also swallows Ctrl+V as text paste). Dump the Windows image and
--- insert an @path Agent can read. Ctrl+Shift+V stays text-only.
-local function win_path_to_wsl(win)
-    win = win:gsub("\r", ""):gsub("%s+$", ""):gsub("\\", "/")
-    local drive, rest = win:match("^(%a):(.*)$")
-    if not drive then
-        return nil
-    end
-    return "/mnt/" .. drive:lower() .. rest
-end
-
-local function clipboard_image_wsl_path()
-    local ok, stdout = wezterm.run_child_process({
-        "powershell.exe",
-        "-NoProfile",
-        "-STA",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-Command",
-        [[
-$img = Get-Clipboard -Format Image -ErrorAction SilentlyContinue
-if ($img) {
-  Add-Type -AssemblyName System.Drawing
-  $out = Join-Path $env:TEMP 'cursor-clip.png'
-  $img.Save($out, [System.Drawing.Imaging.ImageFormat]::Png)
-  Write-Output $out
-  exit 0
-}
-$files = Get-Clipboard -Format FileDropList -ErrorAction SilentlyContinue
-if ($files) {
-  foreach ($f in $files) {
-    if ($f -match '\.(png|jpe?g|gif|webp|bmp)$') { Write-Output $f; exit 0 }
-  }
-}
-exit 1
-]],
-    })
-    if not ok or not stdout then
-        return nil
-    end
-    return win_path_to_wsl(stdout)
-end
-
-local function paste_smart(window, pane)
-    local path = clipboard_image_wsl_path()
-    if path then
-        window:perform_action(act.SendString(" @" .. path .. " "), pane)
-        return
-    end
-    window:perform_action(act.PasteFrom("Clipboard"), pane)
-end
-
 config.keys = {
-    { key = "v", mods = "CTRL", action = wezterm.action_callback(paste_smart) },
+    { key = "v", mods = "CTRL", action = act.PasteFrom("Clipboard") },
     { key = "v", mods = "CTRL|SHIFT", action = act.PasteFrom("Clipboard") },
     { key = "Insert", mods = "SHIFT", action = act.PasteFrom("Clipboard") },
     {

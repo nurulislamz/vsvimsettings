@@ -283,7 +283,16 @@ do
     map("n", "<leader>cs", function() snacks.picker.git_status() end, { desc = "Git Status (changed files)" })
     map("n", "<leader>cD", function() snacks.picker.git_diff() end, { desc = "Git Diff" })
     map("n", "<leader>cq", "<cmd>Gitsigns setqflist target=all<cr>", { desc = "Git diff to quickfix / Trouble" })
+    map("n", "<leader>ct", function()
+        vim.diagnostic.setqflist({ severity = vim.diagnostic.severity.ERROR })
+    end, { desc = "LSP Errors to Quickfix" })
     map({ "n", "t" }, "<C-\\>", function() snacks.terminal() end, { desc = "Toggle Terminal" })
+
+    -- Fast Scrolling (Alt+j/k = 2 lines, Alt+Shift+j/k = 4 lines; viewport + cursor)
+    map({ "n", "x" }, "<M-j>", "2<C-e>2j", { desc = "Scroll down 2 lines (viewport + cursor)" })
+    map({ "n", "x" }, "<M-k>", "2<C-y>2k", { desc = "Scroll up 2 lines (viewport + cursor)" })
+    map({ "n", "x" }, "<M-J>", "4<C-e>4j", { desc = "Scroll down 4 lines (viewport + cursor)" })
+    map({ "n", "x" }, "<M-K>", "4<C-y>4k", { desc = "Scroll up 4 lines (viewport + cursor)" })
 
     map("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
     -- Navigate between splits from terminal mode.
@@ -291,16 +300,21 @@ do
     map("t", "<C-j>", "<C-\\><C-n><C-w>j", { desc = "Move to lower window" })
     map("t", "<C-k>", "<C-\\><C-n><C-w>k", { desc = "Move to upper window" })
     map("t", "<C-l>", "<C-\\><C-n><C-w>l", { desc = "Move to right window" })
-    local function scroll_terminal_line(direction)
-        local motion = direction == "down" and "<C-e>" or "<C-y>"
+    local function scroll_terminal_line(direction, count)
+        count = count or 1
+        local motion = direction == "down" and (count .. "<C-e>") or (count .. "<C-y>")
         local keys = "<C-\\><C-n>" .. motion
         vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(keys, true, false, true), "n", false)
     end
     -- Some terminals deliver Alt as a separate Escape followed by the key.
-    map("t", "<M-j>", function() scroll_terminal_line("down") end, { desc = "Scroll terminal down 1 line" })
-    map("t", "<M-k>", function() scroll_terminal_line("up") end, { desc = "Scroll terminal up 1 line" })
-    map("t", "<Esc>j", function() scroll_terminal_line("down") end, { desc = "Scroll terminal down 1 line" })
-    map("t", "<Esc>k", function() scroll_terminal_line("up") end, { desc = "Scroll terminal up 1 line" })
+    map("t", "<M-j>", function() scroll_terminal_line("down", 2) end, { desc = "Scroll terminal down 2 lines" })
+    map("t", "<M-k>", function() scroll_terminal_line("up", 2) end, { desc = "Scroll terminal up 2 lines" })
+    map("t", "<M-J>", function() scroll_terminal_line("down", 4) end, { desc = "Scroll terminal down 4 lines" })
+    map("t", "<M-K>", function() scroll_terminal_line("up", 4) end, { desc = "Scroll terminal up 4 lines" })
+    map("t", "<Esc>j", function() scroll_terminal_line("down", 2) end, { desc = "Scroll terminal down 2 lines" })
+    map("t", "<Esc>k", function() scroll_terminal_line("up", 2) end, { desc = "Scroll terminal up 2 lines" })
+    map("t", "<Esc>J", function() scroll_terminal_line("down", 4) end, { desc = "Scroll terminal down 4 lines" })
+    map("t", "<Esc>K", function() scroll_terminal_line("up", 4) end, { desc = "Scroll terminal up 4 lines" })
 
     -- ==========================================
     -- LSP Navigation (Definitions, References, etc.)

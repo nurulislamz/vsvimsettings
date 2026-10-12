@@ -108,16 +108,16 @@ return {
     "akinsho/bufferline.nvim",
     event = { "BufReadPost", "BufNewFile" },
     keys = {
-      { "<S-h>", "<cmd>BufferLineCyclePrev<cr>", desc = "Prev Buffer" },
-      { "<S-l>", "<cmd>BufferLineCycleNext<cr>", desc = "Next Buffer" },
-      { "[b", "<cmd>BufferLineCyclePrev<cr>", desc = "Prev Buffer" },
-      { "]b", "<cmd>BufferLineCycleNext<cr>", desc = "Next Buffer" },
+      { "<S-h>", "<cmd>BufferLineCyclePrev<cr>", desc = "Prev Tab" },
+      { "<S-l>", "<cmd>BufferLineCycleNext<cr>", desc = "Next Tab" },
+      { "[b", "<cmd>BufferLineCyclePrev<cr>", desc = "Prev Tab" },
+      { "]b", "<cmd>BufferLineCycleNext<cr>", desc = "Next Tab" },
     },
     opts = function()
       local colors = require("cyberdream.colors").default
       return {
         options = {
-          mode = "buffers",
+          mode = "tabs",
           style_preset = require("bufferline").style_preset.minimal,
           separator_style = "slant",
           show_buffer_close_icons = false,
@@ -129,8 +129,6 @@ return {
             return " " .. icon .. count
           end,
           modified_icon = "●",
-          close_command = function(n) require("snacks").bufdelete(n) end,
-          right_mouse_command = function(n) require("snacks").bufdelete(n) end,
           offsets = {
             {
               filetype = "snacks_layout_box",

@@ -16,8 +16,18 @@ return {
       -- Add current file to Harpoon
       vim.keymap.set("n", "<leader>a", function() harpoon:list():add() end, { desc = "Harpoon add file" })
 
-      -- Quick menu (toggle list)
-      vim.keymap.set("n", "<C-e>", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end, { desc = "Harpoon quick menu" })
+      -- Quick menu (toggle list); persists until explicitly closed (q / <Esc> / <C-e> / <CR>)
+      vim.keymap.set("n", "<C-e>", function()
+        harpoon.ui:toggle_quick_menu(harpoon:list())
+        if harpoon.ui.bufnr then
+          -- harpoon closes the menu on any BufLeave; drop it so only an explicit close ends the menu
+          vim.api.nvim_clear_autocmds({
+            group = require("harpoon.autocmd"),
+            event = "BufLeave",
+            buffer = harpoon.ui.bufnr,
+          })
+        end
+      end, { desc = "Harpoon quick menu" })
 
       -- Direct file jumps 1-4 (<leader>1..<leader>4 and <leader>h1..<leader>h4)
       vim.keymap.set("n", "<leader>1", function() harpoon:list():select(1) end, { desc = "Harpoon file 1" })

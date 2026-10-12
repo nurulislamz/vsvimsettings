@@ -66,11 +66,13 @@ return {
       win = {
         input = {
           keys = {
+            ["<S-CR>"] = { "tab", mode = { "n", "i" } },
             ["<c-q>"] = { "harpoon", mode = { "n", "i" } },
           },
         },
         list = {
           keys = {
+            ["<S-CR>"] = { "tab", mode = { "n", "i" } },
             ["<c-q>"] = { "harpoon", mode = { "n", "i" } },
           },
         },

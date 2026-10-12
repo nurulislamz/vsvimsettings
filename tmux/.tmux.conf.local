@@ -544,17 +544,8 @@ set -g @smooth-scroll-mouse 'true'
 
 unbind-key O
 
-# prefix+s: sessionx popup — type to filter, j/k move, pane preview
-set -g @sessionx-bind 's'
-set -g @sessionx-filter-current 'false'
-set -g @sessionx-preview-enabled 'true'
-set -g @sessionx-preview-location 'right'
-set -g @sessionx-preview-ratio '55%'
-set -g @sessionx-window-height '80%'
-set -g @sessionx-window-width '80%'
-set -g @sessionx-bind-select-up 'k'
-set -g @sessionx-bind-select-down 'j'
-bind-key s run-shell "~/.tmux/plugins/tmux-sessionx/scripts/sessionx.sh" #!important
+# prefix+s: sesh popup — j/k, type to filter, live pane preview
+bind-key s run-shell -b "/home/nurul/vsvimsettings/tmux/sesh-switch.sh" #!important
 
 # kill pane with no confirmation prompt
 bind x kill-pane
@@ -640,10 +631,10 @@ set -ga update-environment TERM
 set -ga update-environment TERM_PROGRAM
 
 # Task logs per tmux session
-set-hook -g after-new-session 'run-shell -b "tmux-tasklog init \"#{session_name}\" \"#{pane_current_path}\""'
-bind-key t display-popup -w 85% -h 85% -E 'tmux-tasklog open "#{session_name}" "#{pane_current_path}"' #!important
+set-hook -g after-new-session 'run-shell -b "tmux-tasklog init #{q:session_name} #{q:pane_current_path}"'
+bind-key t display-popup -w 85% -h 85% -E 'tmux-tasklog open' #!important
 bind-key T clock-mode
-bind-key . display-popup -w 85% -h 85% -E 'tmux-tasklog open "#{session_name}" "#{pane_current_path}"'
+bind-key . display-popup -w 85% -h 85% -E 'tmux-tasklog open'
 
 # Workmux agent dashboard and sidebar
 unbind-key A
@@ -656,6 +647,12 @@ bind-key -N 'Toggle workmux sidebar' S run-shell -b -c '#{pane_current_path}' 'T
 setw -g window-status-separator ' ' #!important
 setw -g window-status-format '#[fg=#313244,bg=#1e1e2e]#[fg=#cdd6f4,bg=#313244] #I #[fg=#cdd6f4,bg=#45475a] #W#{?#{||:#{window_bell_flag},#{window_zoomed_flag}}, ,}#{?window_bell_flag,!,}#{?window_zoomed_flag,Z,} #[fg=#45475a,bg=#1e1e2e]' #!important
 setw -g window-status-current-format '#[fg=#89b4fa,bg=#1e1e2e]#[fg=#1e1e2e,bg=#89b4fa,bold] #I #[fg=#1e1e2e,bg=#cba6f7,bold] #W#{?#{||:#{window_bell_flag},#{window_zoomed_flag}}, ,}#{?window_bell_flag,!,}#{?window_zoomed_flag,Z,} #[fg=#cba6f7,bg=#1e1e2e]' #!important
+
+# Pane titles only when a window has 2+ panes.
+set -g pane-border-status off
+set -g pane-border-format ' #{pane_index} #{pane_title} '
+set-hook -g window-layout-changed 'set -F pane-border-status "#{?#{==:#{window_panes},1},off,top}"'
+set-hook -g after-new-window 'set -F pane-border-status "#{?#{==:#{window_panes},1},off,top}"'
 
 # "$@"
 # # /!\ do not remove the previous line

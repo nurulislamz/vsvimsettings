@@ -124,6 +124,8 @@ return {
         local fn = vim.fn
         local exclude_ft = { "gitcommit", "gitrebase" }
         if vim.tbl_contains(exclude_ft, vim.bo[buf].filetype) then return false end
+        -- scratch/acwrite UI buffers (harpoon menu, pickers, terminals) have no file to write; writing them fires BufWriteCmd
+        if vim.bo[buf].buftype ~= "" then return false end
         if fn.getbufvar(buf, "&modifiable") ~= 1 then return false end
         return true
       end,
@@ -142,5 +144,11 @@ return {
     lazy = false,
     dependencies = { "nvim-tree/nvim-web-devicons" }, 
     opts = {} 
+  },
+  {
+    "kylechui/nvim-surround",
+    version = "^3.0.0",
+    event = "VeryLazy",
+    opts = {},
   },
 }
