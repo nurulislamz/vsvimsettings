@@ -73,6 +73,7 @@ return {
             signature = { enabled = true },
             cmdline = {
                 keymap = { preset = "cmdline" },
+                completion = { menu = { auto_show = true } },
                 sources = function()
                     local cmdtype = vim.fn.getcmdtype()
                     if cmdtype == "/" or cmdtype == "?" then return { "buffer" } end
