@@ -203,7 +203,6 @@ return {
     opts = {} 
   },
   { "kevinhwang91/nvim-hlslens", event = "VeryLazy", opts = {} },
-  { "m4xshen/smartcolumn.nvim", opts = {} },
   {
     "windwp/nvim-ts-autotag",
     dependencies = { "nvim-treesitter/nvim-treesitter" },
