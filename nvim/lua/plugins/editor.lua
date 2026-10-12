@@ -5,7 +5,7 @@ return {
     config = function()
       require("mini.ai").setup()
       require("mini.pairs").setup()
-      require("mini.surround").setup()
+      require("mini.surround").setup({ mappings = { add = "sr", replace = "sa" } })
       require("mini.jump").setup()
       require("mini.icons").setup()
       require("mini.icons").mock_nvim_web_devicons()
