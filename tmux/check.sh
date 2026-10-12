@@ -29,6 +29,43 @@ check "smooth-scroll-speed" 30 "$(tmux -L $SOCK show -gv @smooth-scroll-speed)"
 check "smooth-scroll-mouse" true "$(tmux -L $SOCK show -gv @smooth-scroll-mouse)"
 check "C-u not important" 0 "$(grep -c 'copy-mode-vi C-u.*#!important' "$HOME/.tmux.conf.local")"
 check "M-k smooth 2-line" 1 "$(tmux -L $SOCK list-keys -T copy-mode-vi | grep -c 'scroll.sh up 2')"
+# Exercise the real root key binding through an attached client.
+python3 - "$SOCK" <<'PYTEST'
+import os, pty, subprocess, sys, time
+
+def tm(*args):
+    return subprocess.check_output(["tmux", "-L", sys.argv[1], *args], text=True).strip()
+
+pane = tm("new-window", "-P", "-F", "#{pane_id}", "cat")
+master, slave = pty.openpty()
+env = {k: v for k, v in os.environ.items() if k not in ("TMUX", "TMUX_PANE")}
+env["TERM"] = "xterm-256color"
+client = subprocess.Popen(["tmux", "-L", sys.argv[1], "attach-session"],
+                          stdin=slave, stdout=slave, stderr=slave, env=env)
+try:
+    for _ in range(50):
+        target = tm("list-clients", "-F", "#{client_tty}")
+        if target:
+            break
+        time.sleep(0.1)
+    assert target, "test client did not attach"
+    tm("select-pane", "-t", pane)
+    tm("set-option", "-p", "-t", pane, "@workmux_role", "sidebar")
+    tm("send-keys", "-K", "-c", target, "t")
+    time.sleep(0.2)
+    assert not tm("capture-pane", "-p", "-t", pane), "sidebar received t"
+    tm("set-option", "-pu", "-t", pane, "@workmux_role")
+    tm("send-keys", "-K", "-c", target, "t")
+    time.sleep(0.2)
+    assert tm("capture-pane", "-p", "-t", pane) == "t", "normal typing lost t"
+    assert "tmux-tasklog open" in tm("list-keys", "-T", "prefix", "t")
+    print("ok: sidebar t blocked; normal t and Prefix+t preserved")
+finally:
+    client.terminate()
+    client.wait(timeout=5)
+    os.close(slave)
+    os.close(master)
+PYTEST
 if grep -E "^set -g @plugin '.*(copycat|tmux-cpu|sessionx)" "$HOME/.tmux.conf.local" >/dev/null 2>&1; then
   echo "FAIL: copycat/cpu/sessionx still in @plugin list"; exit 1
 fi
