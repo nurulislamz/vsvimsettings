@@ -466,7 +466,7 @@ do
             end
         end, { ["repeat"] = -1 })
 
-        -- Coalesce Pyright refreshes when several external edits reload together.
+        -- Coalesce Pyrefly refreshes when several external edits reload together.
         local reload_seq = 0
         vim.api.nvim_create_autocmd("FileChangedShellPost", {
             callback = function(event)
@@ -476,7 +476,7 @@ do
                 vim.defer_fn(function()
                     if seq ~= reload_seq then return end
                     for _, client in ipairs(vim.lsp.get_clients()) do
-                        if client.name == "pyright" or client.name == "basedpyright" then
+                        if client.name == "pyrefly" then
                             client:notify("workspace/didChangeConfiguration", { settings = client.config.settings })
                         end
                     end

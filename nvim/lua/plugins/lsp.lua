@@ -95,8 +95,8 @@ return {
         config = function()
             local capabilities = vim.lsp.protocol.make_client_capabilities()
             -- Neovim hardcodes didChangeWatchedFiles off on Linux (vim/lsp/protocol.lua),
-            -- even though the inotify backend is available. Force it on so basedpyright
-            -- sees file changes made outside nvim (agents, git) without a server restart.
+            -- even though the inotify backend is available. Force it on so Pyrefly sees
+            -- file changes made outside nvim (agents, git) without a server restart.
             if vim.fn.has("linux") == 1 and vim.fn.executable("inotifywait") == 1 then
                 capabilities.workspace = capabilities.workspace or {}
                 capabilities.workspace.didChangeWatchedFiles =
@@ -108,7 +108,7 @@ return {
                 "gopls",
                 "clangd",
                 "rust_analyzer",
-                "basedpyright",
+                "pyrefly",
                 "jsonls",
                 "yamlls",
                 "eslint",
@@ -130,17 +130,6 @@ return {
                         require("workspace-diagnostics").populate_workspace_diagnostics(client, bufnr)
                     end
                 end,
-            })
-            vim.lsp.config("basedpyright", {
-                settings = {
-                    basedpyright = {
-                        analysis = {
-                            autoSearchPaths = true,
-                            diagnosticMode = "workspace",
-                            useLibraryCodeForTypes = true,
-                        },
-                    },
-                },
             })
             vim.lsp.config("lua_ls", {
                 settings = {
