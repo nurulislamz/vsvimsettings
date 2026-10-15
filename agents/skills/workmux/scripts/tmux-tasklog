@@ -82,7 +82,8 @@ init_file() {
 self_check() {
   local tmp repo wt out script
   script=$(realpath "$0")
-  tmp=$(mktemp -d)
+  # macOS mktemp returns /var, git returns /private/var.
+  tmp=$(cd "$(mktemp -d)" && pwd -P)
   trap 'rm -rf "$tmp"' RETURN
   repo="$tmp/repo"
   mkdir -p "$repo"

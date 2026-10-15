@@ -52,6 +52,7 @@ class RestoreTests(unittest.TestCase):
             self.assertEqual((home / ".tmux.conf").resolve(), home / ".tmux-omt/.tmux.conf")
             self.assertEqual((home / ".tmux.conf.local").resolve(), ROOT / "tmux/.tmux.conf.local")
             self.assertEqual((home / ".local/bin/sesh-switch").resolve(), ROOT / "tmux/sesh-switch.sh")
+            self.assertTrue(os.access(home / ".local/bin/sesh-switch", os.X_OK))
             self.assertEqual(skill.resolve(), ROOT / "agents/skills/workmux")
             self.assertEqual((home / ".codex/skills/workmux").resolve(), skill.resolve())
             self.assertEqual((home / ".local/bin/workmux-agent-hook").resolve(), ROOT / "agents/skills/workmux/scripts/workmux-agent-hook")
@@ -79,6 +80,41 @@ class RestoreTests(unittest.TestCase):
             result = self.run_install(home)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual((plugin / "config.yaml").resolve(), ROOT / "tmux/config.yaml")
+
+    def test_zed_directory_already_linked_into_repo(self):
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            self.seed_oh_my_tmux(home)
+            (home / ".config").mkdir()
+            (home / ".config/zed").symlink_to(ROOT / "zed", target_is_directory=True)
+            result = self.run_install(home)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            for name in ("settings.json", "keymap.json", "tasks.json"):
+                self.assertFalse((ROOT / "zed" / name).is_symlink())
+                self.assertEqual((home / ".config/zed" / name).resolve(), ROOT / "zed" / name)
+            self.assertEqual((home / ".claude/AGENTS.md").resolve(), ROOT / "agents/AGENTS.md")
+
+    def test_installed_sesh_switch_connects_selected_session(self):
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            self.seed_oh_my_tmux(home)
+            result = self.run_install(home)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            commands = home / ".local/bin"
+            for name, body in {
+                "sesh": 'if [ "$1" = list ]; then echo "test session"; else printf "%s\\n" "$@"; fi',
+                "fzf-tmux": 'cat',
+            }.items():
+                stub = commands / name
+                stub.write_text("#!/bin/sh\n" + body + "\n")
+                stub.chmod(0o755)
+            result = subprocess.run(
+                [str(commands / "sesh-switch")],
+                env={**os.environ, "HOME": str(home), "PATH": f"{commands}:{os.environ['PATH']}"},
+                capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout.splitlines(), ["connect", "test session"])
 
     def test_invalid_hooks_abort_before_replacing_config(self):
         with tempfile.TemporaryDirectory() as directory:

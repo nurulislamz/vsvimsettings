@@ -14,7 +14,8 @@ OMT_REPO = "https://github.com/gpakosz/.tmux.git"
 
 
 def link(source, destination, backup):
-    if destination.is_symlink() and destination.resolve() == source.resolve():
+    # Also covers a destination inside a directory already linked into the repo.
+    if destination.resolve() == source.resolve():
         return
     destination.parent.mkdir(parents=True, exist_ok=True)
     if os.path.lexists(destination):
@@ -92,9 +93,12 @@ def install():
         ".config/agents/skills/workmux": "agents/skills/workmux",
         ".config/workmux/config.yaml": "workmux/config.yaml",
         ".config/workmux/review.yaml": "workmux/review.yaml",
+        ".config/zed/settings.json": "zed/settings.json",
+        ".config/zed/keymap.json": "zed/keymap.json",
+        ".config/zed/tasks.json": "zed/tasks.json",
     }
     for target in (
-        ".codex/AGENTS.md", ".claude/CLAUDE.md", ".config/opencode/AGENTS.md",
+        ".codex/AGENTS.md", ".claude/CLAUDE.md", ".claude/AGENTS.md", ".config/opencode/AGENTS.md",
         ".cursor/rules/session-tasks.md", ".gemini/config/rules/session-tasks.md",
     ):
         paths[target] = "agents/AGENTS.md"

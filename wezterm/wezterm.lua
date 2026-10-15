@@ -89,10 +89,17 @@ end)
 local act = wezterm.action
 
 config.keys = {
-    { key = "v", mods = "CTRL", action = act.PasteFrom("Clipboard") },
     { key = "v", mods = "CTRL|SHIFT", action = act.PasteFrom("Clipboard") },
     { key = "Insert", mods = "SHIFT", action = act.PasteFrom("Clipboard") },
-    {
+    -- Shift+Enter: send CSI u sequence (\x1b[13;2u) for newline in agy, TUIs, and shells
+    { key = "Enter", mods = "SHIFT", action = act.SendString("\x1b[13;2u") },
+    { key = "CapsLock", action = act.SendKey({ key = "Escape" }) },
+}
+
+-- macOS keeps default Cmd+C/Cmd+V, so Ctrl+C/Ctrl+V reach the shell and Neovim.
+if host_os ~= "macos" then
+    table.insert(config.keys, { key = "v", mods = "CTRL", action = act.PasteFrom("Clipboard") })
+    table.insert(config.keys, {
         key = "c",
         mods = "CTRL",
         action = wezterm.action_callback(function(window, pane)
@@ -104,11 +111,8 @@ config.keys = {
                 window:perform_action(act.SendKey({ key = "c", mods = "CTRL" }), pane)
             end
         end),
-    },
-    -- Shift+Enter: send CSI u sequence (\x1b[13;2u) for newline in agy, TUIs, and shells
-    { key = "Enter", mods = "SHIFT", action = act.SendString("\x1b[13;2u") },
-    { key = "CapsLock", action = act.SendKey({ key = "Escape" }) },
-}
+    })
+end
 
 -- Default Shell / Domain Configuration
 if host_os == "windows" then

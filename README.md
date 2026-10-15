@@ -52,7 +52,8 @@ Existing Codex and AGY boxes sync host rules/hooks on their next launch.
 overlay with the box you chose, including Codex's update-prompt flag. No account
 or model is selected by the installer.
 
-Ghostty, Zed and IdeaVim stay stored; the installer does not apply them.
+The installer also links Zed's `settings.json`, `keymap.json` and `tasks.json`.
+Ghostty and IdeaVim stay stored; the installer does not apply them.
 
 ## Neovim
 
