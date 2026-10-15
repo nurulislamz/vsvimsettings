@@ -10,7 +10,7 @@ repo.
 Clone this repo (any location works), then on a Mac with Homebrew:
 
 ```sh
-git clone git@github.com:nurulislamz/vsvimsettings.git ~/vsvimsettings
+git clone git@github.com:nurulislamz/dotfiles.git ~/vsvimsettings
 ~/vsvimsettings/scripts/bootstrap
 ```
 
