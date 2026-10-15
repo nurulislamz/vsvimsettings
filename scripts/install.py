@@ -5,10 +5,12 @@ import json
 import os
 from pathlib import Path
 import shutil
+import subprocess
 import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
+OMT_REPO = "https://github.com/gpakosz/.tmux.git"
 
 
 def link(source, destination, backup):
@@ -43,6 +45,28 @@ def merge_hooks(current, template, agent):
     return merged
 
 
+def ensure_oh_my_tmux(home):
+    dest = home / ".tmux-omt"
+    if (dest / ".tmux.conf").exists():
+        return dest
+    if dest.exists():
+        try:
+            dest.rmdir()
+        except OSError:
+            print(f"Skipped oh-my-tmux: {dest} exists without .tmux.conf")
+            return None
+    try:
+        subprocess.run(
+            ["git", "clone", "--depth", "1", OMT_REPO, str(dest)],
+            check=True, capture_output=True, text=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as exc:
+        detail = getattr(exc, "stderr", None) or exc
+        print(f"Skipped oh-my-tmux clone: {detail}")
+        return None
+    return dest
+
+
 def install():
     home = Path.home()
     # Validate every hook config before replacing any installed files.
@@ -61,6 +85,8 @@ def install():
     backup = home / ".local/state/vsvimsettings/backups" / str(time.time_ns())
     paths = {
         ".config/nvim": "nvim",
+        ".config/wezterm": "wezterm",
+        ".zshrc": "shell/.zshrc",
         ".tmux.conf.local": "tmux/.tmux.conf.local",
         ".config/agents/AGENTS.md": "agents/AGENTS.md",
         ".config/agents/skills/workmux": "agents/skills/workmux",
@@ -82,8 +108,16 @@ def install():
     for name in ("tmux-tasklog", "workmux-agent-hook", "codex-box-rename-bridge"):
         paths[f".local/bin/{name}"] = f"agents/skills/workmux/scripts/{name}"
     paths[".local/bin/cursor-box"] = "agents/bin/agent-box"
+    paths[".local/bin/sesh-switch"] = "tmux/sesh-switch.sh"
+    omt = ensure_oh_my_tmux(home)
+    if omt is not None:
+        link(omt / ".tmux.conf", home / ".tmux.conf", backup)
     for target, source in paths.items():
         link(ROOT / source, home / target, backup)
+
+    which_key = home / ".tmux/plugins/tmux-which-key"
+    if which_key.is_dir():
+        link(ROOT / "tmux/config.yaml", which_key / "config.yaml", backup)
 
     (home / ".local/state/workmux").mkdir(parents=True, exist_ok=True)
     for destination, current, merged in updates:

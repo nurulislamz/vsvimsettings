@@ -61,14 +61,20 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
 
-# Homebrew
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+# Homebrew: Apple Silicon, Intel Mac, Linuxbrew
+for brew_bin in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+  if [ -x "$brew_bin" ]; then
+    eval "$("$brew_bin" shellenv)"
+    break
+  fi
+done
 
-# OpenClaw Completion
-[ -s "/home/nurul/.openclaw/completions/openclaw.zsh" ] && . "/home/nurul/.openclaw/completions/openclaw.zsh"
+[ -s "$HOME/.openclaw/completions/openclaw.zsh" ] && . "$HOME/.openclaw/completions/openclaw.zsh"
+[ -s "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"
 
-. "$HOME/.local/bin/env"
- 
-# Fuzzy finder & directory jumping
-eval "$(fzf --zsh)"
-eval "$(zoxide init zsh)"
+if command -v fzf >/dev/null 2>&1; then
+  eval "$(fzf --zsh)"
+fi
+if command -v zoxide >/dev/null 2>&1; then
+  eval "$(zoxide init zsh)"
+fi

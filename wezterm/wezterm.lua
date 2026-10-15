@@ -24,6 +24,8 @@ config.font = wezterm.font_with_fallback({
         family = "Cascadia Code",
         weight = "Regular",
     },
+    "JetBrainsMono Nerd Font",
+    "JetBrains Mono",
     "Consolas",
     emoji_font,
 })
@@ -124,6 +126,8 @@ elseif host_os == "linux" then
     config.front_end = "WebGpu"
     config.window_background_image = os.getenv("HOME") .. "/.config/wezterm/bg-blurred.png"
     config.window_decorations = nil -- use system decorations
+else
+    config.default_prog = { "zsh" }
 end
 
 return config

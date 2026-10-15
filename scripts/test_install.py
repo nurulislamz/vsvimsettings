@@ -19,9 +19,16 @@ class RestoreTests(unittest.TestCase):
             capture_output=True, text=True, check=False,
         )
 
+    def seed_oh_my_tmux(self, home):
+        omt = home / ".tmux-omt"
+        omt.mkdir()
+        (omt / ".tmux.conf").write_text("# dummy oh-my-tmux\n")
+        return omt
+
     def test_restore_preserves_files_hooks_and_is_repeatable(self):
         with tempfile.TemporaryDirectory() as directory:
             home = Path(directory)
+            self.seed_oh_my_tmux(home)
             nvim = home / ".config/nvim"
             nvim.mkdir(parents=True)
             (nvim / "init.lua").write_text("original config\n")
@@ -40,6 +47,11 @@ class RestoreTests(unittest.TestCase):
             result = self.run_install(home)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(nvim.resolve(), ROOT / "nvim")
+            self.assertEqual((home / ".config/wezterm").resolve(), ROOT / "wezterm")
+            self.assertEqual((home / ".zshrc").resolve(), ROOT / "shell/.zshrc")
+            self.assertEqual((home / ".tmux.conf").resolve(), home / ".tmux-omt/.tmux.conf")
+            self.assertEqual((home / ".tmux.conf.local").resolve(), ROOT / "tmux/.tmux.conf.local")
+            self.assertEqual((home / ".local/bin/sesh-switch").resolve(), ROOT / "tmux/sesh-switch.sh")
             self.assertEqual(skill.resolve(), ROOT / "agents/skills/workmux")
             self.assertEqual((home / ".codex/skills/workmux").resolve(), skill.resolve())
             self.assertEqual((home / ".local/bin/workmux-agent-hook").resolve(), ROOT / "agents/skills/workmux/scripts/workmux-agent-hook")
@@ -57,6 +69,17 @@ class RestoreTests(unittest.TestCase):
             self.assertEqual(claude.read_text(), first)
             self.assertEqual(list(backups[0].parent.iterdir()), backups)
 
+    def test_which_key_config_linked_when_plugin_present(self):
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            self.seed_oh_my_tmux(home)
+            plugin = home / ".tmux/plugins/tmux-which-key"
+            plugin.mkdir(parents=True)
+            (plugin / "config.yaml").write_text("stock\n")
+            result = self.run_install(home)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual((plugin / "config.yaml").resolve(), ROOT / "tmux/config.yaml")
+
     def test_invalid_hooks_abort_before_replacing_config(self):
         with tempfile.TemporaryDirectory() as directory:
             home = Path(directory)
@@ -67,6 +90,18 @@ class RestoreTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertEqual(hooks.read_text(), "invalid JSON")
             self.assertFalse((home / ".config/nvim").exists())
+
+    def test_tmux_local_has_no_machine_paths(self):
+        text = (ROOT / "tmux/.tmux.conf.local").read_text()
+        self.assertNotIn("/home/nurul", text)
+        self.assertIn("$HOME/.local/bin/sesh-switch", text)
+        self.assertIn("$HOME/.tmux/plugins/tmux-smooth-scroll", text)
+
+    def test_zshrc_is_portable(self):
+        text = (ROOT / "shell/.zshrc").read_text()
+        self.assertNotIn("/home/nurul", text)
+        self.assertIn("/opt/homebrew/bin/brew", text)
+        self.assertIn("[ -s \"$HOME/.local/bin/env\" ]", text)
 
 
 if __name__ == "__main__":

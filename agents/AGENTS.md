@@ -76,7 +76,3 @@ Write Notes if the next ID will need a fact. Then stop and wait.
 ```
 
 Only `[x]` completes an assignment. On `[!]`, append a Note and stop the run without reassigning or skipping that ID. On crash/no status change, report BLOCKED after a bounded wait; leave `[>]` intact. Finish when no pending or working IDs remain; include mid-run appends. Window renaming stays independent.
-
-## Precedence
-
-A repo-local `AGENTS.md` or `CLAUDE.md` overrides this file for that repo.

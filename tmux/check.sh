@@ -66,10 +66,13 @@ finally:
     os.close(slave)
     os.close(master)
 PYTEST
-if grep -E "^set -g @plugin '.*(copycat|tmux-cpu|sessionx)" "$HOME/.tmux.conf.local" >/dev/null 2>&1; then
-  echo "FAIL: copycat/cpu/sessionx still in @plugin list"; exit 1
+if grep -E "^set -g @plugin '.*(copycat|tmux-cpu)" "$HOME/.tmux.conf.local" >/dev/null 2>&1; then
+  echo "FAIL: copycat/cpu still in @plugin list"; exit 1
 fi
-if ! awk '/^set -g @plugin /{p=$0} END{if (p !~ /tmux-continuum/) {print "FAIL: continuum is not last @plugin"; exit 1}}' "$HOME/.tmux.conf.local"; then
-  exit 1
+if grep -q '/home/nurul' "$HOME/.tmux.conf.local"; then
+  echo "FAIL: hardcoded /home/nurul in .tmux.conf.local"; exit 1
 fi
+got=$(awk -F"'" '/^set -g @plugin /{n=$2; sub(".*/","",n); print n}' "$HOME/.tmux.conf.local" | paste -sd' ' -)
+check "plugin list" "tmux-resurrect tmux-fzf tmux-sessionx tmux-which-key tmux-smooth-scroll tmux-continuum tmux-assistant-resurrect" "$got"
+check "sesh-switch bind" 1 "$(tmux -L $SOCK list-keys -T prefix | grep -c sesh-switch)"
 echo "all checks passed"

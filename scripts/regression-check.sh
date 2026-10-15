@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Regression checks for live WSL tmux, nvim, Antigravity skills, and agy-box.
+# Live WSL host audit (hardcoded /home/nurul and agentusage paths).
+# Portable installer checks: scripts/verify
 set -euo pipefail
 
 PASS=0
@@ -45,9 +46,9 @@ if tmux show -g @continuum-restore 2>/dev/null | grep -q "on"; then
 else
   fail "continuum-restore missing ($(tmux show -g @continuum-restore 2>/dev/null | tr '\n' ' '))"
 fi
-plugin_extra="$(ls "$HOME/.tmux/plugins" 2>/dev/null | grep -Ev '^(tpm|tpm_log.txt|tmux-which-key|tmux-resurrect|tmux-continuum|tmux-fzf|tmux-smooth-scroll)$' || true)"
+plugin_extra="$(ls "$HOME/.tmux/plugins" 2>/dev/null | grep -Ev '^(tpm|tpm_log.txt|tmux-which-key|tmux-resurrect|tmux-continuum|tmux-fzf|tmux-smooth-scroll|tmux-sessionx|tmux-assistant-resurrect)$' || true)"
 if [[ -z "$plugin_extra" ]]; then
-  ok 'tmux plugin set is resurrect/continuum/fzf/which-key/smooth-scroll'
+  ok 'tmux plugin set is resurrect/continuum/fzf/which-key/smooth-scroll/sessionx/assistant-resurrect'
 else
   fail "unexpected tmux plugins: $plugin_extra"
 fi

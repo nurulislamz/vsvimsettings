@@ -1,0 +1,40 @@
+#!/bin/sh
+# First-machine restore: packages (if brew), links, nvim lockfile, tmux plugins.
+set -eu
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+
+if command -v brew >/dev/null 2>&1; then
+  brew bundle --file="$ROOT/Brewfile"
+else
+  echo "brew not found; install packages yourself (see Brewfile)"
+fi
+
+python3 "$ROOT/scripts/install.py"
+
+if command -v nvim >/dev/null 2>&1; then
+  nvim --headless "+Lazy! restore" +qa
+fi
+
+if command -v tmux >/dev/null 2>&1 && [ -f "$HOME/.tmux.conf" ]; then
+  SOCK=dotfiles-bootstrap
+  env -u TMUX tmux -L "$SOCK" kill-server 2>/dev/null || true
+  env -u TMUX tmux -L "$SOCK" -f "$HOME/.tmux.conf" new-session -d
+  env -u TMUX tmux -L "$SOCK" source-file "$HOME/.tmux.conf" || true
+  i=0
+  while [ "$i" -lt 30 ]; do
+    [ -d "$HOME/.tmux/plugins/tmux-continuum" ] && break
+    i=$((i + 1))
+    sleep 2
+  done
+  if [ -x "$HOME/.tmux/plugins/tpm/bin/install_plugins" ]; then
+    env -u TMUX TMUX_PLUGIN_MANAGER_PATH="$HOME/.tmux/plugins" \
+      "$HOME/.tmux/plugins/tpm/bin/install_plugins" || true
+  fi
+  env -u TMUX tmux -L "$SOCK" kill-server 2>/dev/null || true
+  python3 "$ROOT/scripts/install.py"
+fi
+
+echo "Bootstrap done from $ROOT"
+echo "Authenticate agent CLIs yourself. This repo does not copy credentials."
+echo "Install native workmux at ~/.local/libexec/workmux before using the wrapper."
+echo "Box launchers need bubblewrap (Linux only)."
