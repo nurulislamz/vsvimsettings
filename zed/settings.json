@@ -1,4 +1,14 @@
 {
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false,
+    "anthropic_retention": false
+  },
+  "agent_servers": {
+    "claude-acp": {
+      "type": "registry"
+    }
+  },
   "vim_mode": true,
   "vim": {
     "use_system_clipboard": "on_yank"

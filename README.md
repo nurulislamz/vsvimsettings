@@ -60,8 +60,9 @@ git add nvim
 git commit -m 'Restore Neovim configuration'
 ```
 
-The other existing folders (`shell`, `ideavim`, `ghostty-settings`, `wezterm`,
-`zed`) are stored settings; the installer does not apply them.
+The installer also links `~/.config/wezterm` and Zed's `settings.json`,
+`keymap.json` and `tasks.json`. The other folders (`shell`, `ideavim`,
+`ghostty-settings`) are stored settings; the installer does not apply them.
 
 ## Check
 
