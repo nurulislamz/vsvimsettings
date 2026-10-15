@@ -10,7 +10,7 @@ description: >-
 
 # workmux
 
-Shared by Cursor, Codex, Claude, OpenCode, and Antigravity. Source: `~/vsvimsettings/agents/skills/workmux`. Installed skill dirs and `~/.config/agents/skills/workmux` link here; edit the dotfiles source. Restore links, helpers, rules and hooks with `python3 ~/vsvimsettings/scripts/install.py`.
+Shared by Cursor, Codex, Claude, OpenCode, and Antigravity. Source: `<repo>/agents/skills/workmux` in the dotfiles repo (`dirname "$(readlink ~/.config/nvim)"`). Installed skill dirs and `~/.config/agents/skills/workmux` link here; edit the dotfiles source. Restore links, helpers, rules and hooks with `python3 <repo>/scripts/install.py`.
 
 Binary: `~/.local/bin/workmux` (`workmux 0.1.271`).
 Global config: `~/.config/workmux/config.yaml`.
