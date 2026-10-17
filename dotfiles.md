@@ -97,7 +97,68 @@ If using Antigravity, install its real CLI first and preserve its executable
 as `~/.local/bin/agy-real`, or set `AGY_REAL_BIN` to its real path. The installer
 replaces `~/.local/bin/agy` with a wrapper. That wrapper and the shell aliases
 default to `--dangerously-skip-permissions`; use only with that behavior intended.
-Install and authenticate other agent CLIs separately.
+Use the agent setup script below to install missing agent CLIs and recreate profiles.
+Authentication remains separate.
+
+## Agent tools and saved box inventory
+
+For Linux, Surface Linux and WSL, after installing the package prerequisites:
+
+```sh
+sudo apt install curl git python3 tmux bubblewrap
+bash ~/vsvimsettings/scripts/setup-agents.sh
+```
+
+The script installs missing Antigravity, Codex, Oh My Pi (`omp`) and Cursor Agent
+CLIs, preserves the real AGY executable before linking its wrapper, then runs
+`scripts/install.py`. This restores all dotfiles links/hooks, including shell
+and editor configuration. Existing replacements use the installer's backups.
+It also links shared rules at `~/.omp/AGENTS.md` and `~/.config/omp/AGENTS.md`,
+and the workmux skill at `~/.omp/agent/skills/workmux`; replaced OMP paths are
+backed up under `~/.local/state/vsvimsettings/backups/agents-<timestamp>-<pid>/`.
+
+Profile names captured on 2026-10-17 (including spare/test profiles):
+
+| Launcher | Profiles | Local storage |
+| --- | --- | --- |
+| `agy-box` | `chaos`, `missing`, `mohammed`, `nurulz`, `physics`, `worker1` | `~/.agy-containers/` |
+| `codex-box` | `dev`, `mohammed`, `nurulz` | `~/.codex-containers/` |
+| `agent-box` / `cursor-box` | `box-a`, `box-alpha`, `nurulz`, `physics` | `~/.agent-containers/` |
+| `omp` | One host configuration; no box launcher | `~/.omp/` |
+
+The names live in the script arrays. Update those arrays when adding profiles.
+Rerunning skips installed CLIs and existing box directories. Each created box
+gets a small directory-existence check. No existing profiles are deleted, and
+no login is performed. A partial failed run can be rerun after fixing its error.
+
+Authenticate each account on the target machine:
+
+```sh
+agy-box nurulz
+codex-box nurulz login
+agent-box nurulz login
+omp
+```
+
+Repeat for the other boxes you use; complete OMP's provider login inside OMP.
+Keep `~/.local/bin` on PATH. If using a custom `AGY_REAL_BIN`, export that same
+path in future shells too. The standard preserved path is `~/.local/bin/agy-real`.
+
+Tracked: launcher code, named-profile inventory, shared instructions, workmux
+skill, hook templates and workmux configuration. Not transferred: credentials,
+API keys, sessions/history, machine trust, private MCP configuration, extra
+locally installed skills/extensions, or per-account model/provider settings.
+OMP's local databases and `~/.omp/agent/config.yml` stay outside Git.
+The script uses the existing AGY permission bypass and Cursor trust/auto-review/
+MCP-approval defaults; these boxes share the host home directory and are account
+separation, not isolation from your files. Native workmux (including the custom
+Session-column build) is still a separate prerequisite for dashboard use.
+
+Install sources: [Antigravity](https://github.com/google-antigravity/antigravity-cli),
+[Codex](https://github.com/openai/codex),
+[OMP](https://github.com/can1357/oh-my-pi), and
+[Cursor Agent](https://cursor.com/docs/cli/installation).
+Only missing CLIs are downloaded; installed versions are retained.
 
 ## 5. Restore links, hooks and plugins
 
