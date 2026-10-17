@@ -90,6 +90,11 @@ do
     map("n", "<leader><tab><tab>", ":tabnew<cr>", { desc = "New Tab" })
     map("n", "<leader><tab>l", ":tabnext<cr>", { desc = "Next Tab" })
     map("n", "<leader><tab>h", ":tabprevious<cr>", { desc = "Previous Tab" })
+    map("n", "<leader><tab>q", function()
+        if vim.fn.tabpagenr("$") > 1 then
+            pcall(vim.cmd, "tabclose")
+        end
+    end, { desc = "Close Tab" })
     map("n", "<leader><tab>o", function()
         if vim.fn.tabpagenr("$") > 1 then
             pcall(vim.cmd, "tabonly")
