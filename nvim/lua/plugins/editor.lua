@@ -7,6 +7,7 @@ return {
       require("mini.pairs").setup()
       require("mini.surround").setup({ mappings = { add = "sr", replace = "sa" } })
       require("mini.jump").setup()
+      require("mini.jump2d").setup({ mappings = { start_jumping = "S" } })
       require("mini.icons").setup()
       require("mini.icons").mock_nvim_web_devicons()
     end,
