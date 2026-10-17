@@ -9,12 +9,39 @@ import pathlib
 import pty
 import select
 import signal
+import subprocess
 import sys
 import termios
 from typing import Any
 import tty
 
 NATIVE = str(pathlib.Path.home() / ".local/libexec/workmux")
+
+
+def tag_pane_titles_with_session() -> None:
+    try:
+        out = subprocess.check_output(
+            ["tmux", "list-panes", "-a", "-F", "#{pane_id}\t#{session_name}\t#{pane_title}"],
+            text=True,
+            timeout=2,
+        )
+        for line in out.splitlines():
+            parts = line.split("\t", 2)
+            if len(parts) == 3:
+                pane_id, session, title = parts
+                session = session.strip().lstrip('"')
+                title = title.strip()
+                if session and not title.startswith(f"[{session}]"):
+                    if title.startswith("[") and "] " in title:
+                        title = title.split("] ", 1)[1]
+                    new_title = f"[{session}] {title}" if title else f"[{session}]"
+                    subprocess.run(
+                        ["tmux", "select-pane", "-t", pane_id, "-T", new_title],
+                        check=False,
+                        timeout=1,
+                    )
+    except Exception:
+        pass
 
 
 def set_winsize(src: int, dst: int) -> None:
@@ -35,6 +62,8 @@ def main() -> int:
 
     if not (sys.stdin.isatty() and sys.stdout.isatty()):
         run_passthrough()
+
+    tag_pane_titles_with_session()
 
     pid, master = pty.fork()
     if pid == 0:
