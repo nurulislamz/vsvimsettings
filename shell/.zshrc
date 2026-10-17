@@ -78,3 +78,7 @@ fi
 if command -v zoxide >/dev/null 2>&1; then
   eval "$(zoxide init zsh)"
 fi
+
+# Antigravity CLI auto-approve permissions
+alias agy="agy --dangerously-skip-permissions"
+alias agy-box="agy-box --dangerously-skip-permissions"
