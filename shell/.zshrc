@@ -141,3 +141,16 @@ alias wm='workmux'
 if command -v workmux >/dev/null 2>&1; then
   eval "$(workmux completions zsh)"
 fi
+
+# Bare `tmux` attaches the last session; create only when none exist.
+tmux() {
+  if (( $# )); then
+    command tmux "$@"
+    return
+  fi
+  if [[ -n "$TMUX" ]]; then
+    command tmux switch-client -l
+    return
+  fi
+  command tmux attach || command tmux new-session
+}

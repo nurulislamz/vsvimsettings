@@ -5,9 +5,4 @@ return {
     dependencies = { "MunifTanjim/nui.nvim" },
     opts = { disable_mouse = false },
   },
-  {
-    "tris203/precognition.nvim",
-    event = "VeryLazy",
-    opts = {},
-  },
 }
