@@ -20,6 +20,16 @@ return {
           end)
         end,
       })
+      -- Do not persist sessions when opening task.md or scratch task files
+      vim.api.nvim_create_autocmd({ "BufReadPost", "BufNewFile" }, {
+        group = vim.api.nvim_create_augroup("persistence_task_ignore", { clear = true }),
+        pattern = { "*/task.md", "*tasklogs/*.md", "task.md" },
+        callback = function()
+          pcall(function()
+            require("persistence").stop()
+          end)
+        end,
+      })
       -- Close explorer before saving sessions so zombie buffers aren't restored
       vim.api.nvim_create_autocmd("User", {
         pattern = "PersistenceSavePre",
