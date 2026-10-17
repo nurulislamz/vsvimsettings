@@ -307,8 +307,13 @@ do
     -- Snacks Pickers
     map("n", "<leader>ff", function() require("fff").find_files() end, { desc = "Find files (FFF)" })
     map("n", "<leader>fr", function() snacks.picker.recent() end, { desc = "Fuzzy find recent files" })
-    map("n", "<leader>fs", function() snacks.picker.grep() end, { desc = "Find string in CWD" })
-    map("n", "<leader>fc", function() snacks.picker.grep_word() end, { desc = "Find word under cursor" })
+    map({ "n", "x" }, "<leader>fs", function() require("grug-far").open({ transient = true }) end, { desc = "Search string in CWD (GrugFar)" })
+    map("n", "<leader>fc", function()
+        require("grug-far").open({
+            transient = true,
+            prefills = { search = vim.fn.expand("<cword>") },
+        })
+    end, { desc = "Search word under cursor (GrugFar)" })
 
     -- Snacks Ergonomics & Tools
     map("n", "<leader>z", function() snacks.zen() end, { desc = "Zen mode" })

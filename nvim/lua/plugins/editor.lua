@@ -239,4 +239,9 @@ return {
     },
     opts = {},
   },
+  {
+    "MagicDuck/grug-far.nvim",
+    cmd = { "GrugFar", "GrugFarWithin" },
+    opts = { headerMaxWidth = 80 },
+  },
 }
