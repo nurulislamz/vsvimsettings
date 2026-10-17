@@ -16,10 +16,10 @@ sidebar:
   layout: compact
   group_by: session
   templates:
-    compact: "{status_icon} #[bold]{window_index}#[default] #[fg=cyan]│#[default] {session}"
+    compact: "{status_icon} #[bold]{window_index}#[default] #[fg=cyan]│#[default] {pane_title}"
     tiles:
       - "{primary} {pane_suffix} {fill} {elapsed}"
       - "{secondary} {fill} {git_stats}"
-      - "{session} {fill} {pr_checks}"
+      - "{pane_title} {fill} {pr_checks}"
     grouped:
       header: "{group} {fill} {group_count}"
