@@ -191,9 +191,10 @@ return {
   { "mbbill/undotree", lazy = false },
   {
     "okuuva/auto-save.nvim",
-    event = { "InsertLeave", "TextChanged" },
+    event = { "BufReadPost", "BufNewFile" },
     opts = {
       debounce_delay = 1000,
+      write_all_buffers = true,
       condition = function(buf)
         local fn = vim.fn
         local exclude_ft = { "gitcommit", "gitrebase" }
