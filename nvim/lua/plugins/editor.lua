@@ -17,11 +17,6 @@ return {
         },
       })
       require("mini.jump").setup()
-      local jump2d = require("mini.jump2d")
-      jump2d.setup({
-        spotter = jump2d.builtin_opts.word_start.spotter,
-        mappings = { start_jumping = "s" },
-      })
       require("mini.icons").setup()
       require("mini.icons").mock_nvim_web_devicons()
     end,
@@ -258,5 +253,13 @@ return {
     "MagicDuck/grug-far.nvim",
     cmd = { "GrugFar", "GrugFarWithin" },
     opts = { headerMaxWidth = 80 },
+  },
+  {
+    "folke/flash.nvim",
+    event = "VeryLazy",
+    opts = {},
+    keys = {
+      { "s", mode = { "n", "x", "o" }, function() require("flash").jump() end, desc = "Flash" },
+    },
   },
 }
