@@ -82,7 +82,7 @@ def tag_pane_titles_with_session() -> None:
                 if " | " in chosen:
                     chosen = chosen.split(" | ")[0].strip()
 
-                new_title = f"[{session_clean}] {chosen}" if chosen else f"[{session_clean}]"
+                new_title = chosen
                 if new_title != title:
                     subprocess.run(
                         ["tmux", "select-pane", "-t", pane_id, "-T", new_title],
