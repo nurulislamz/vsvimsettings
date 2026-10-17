@@ -17,7 +17,11 @@ return {
         },
       })
       require("mini.jump").setup()
-      require("mini.jump2d").setup({ mappings = { start_jumping = "s" } })
+      local jump2d = require("mini.jump2d")
+      jump2d.setup({
+        spotter = jump2d.builtin_opts.word_start.spotter,
+        mappings = { start_jumping = "s" },
+      })
       require("mini.icons").setup()
       require("mini.icons").mock_nvim_web_devicons()
     end,
